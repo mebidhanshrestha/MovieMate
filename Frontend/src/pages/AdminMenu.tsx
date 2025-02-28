@@ -6,12 +6,16 @@ interface MenuItem {
   _id: string;
   name: string;
   price: number;
+  weight: number;
+  calories:number;
   image: string;
 }
 
 interface NewMenuItem {
   name: string;
   price: string;
+  weight: string;
+  calories:string;
   image: File | null;
 }
 
@@ -20,6 +24,8 @@ const AdminMenu = () => {
   const [newItem, setNewItem] = useState<NewMenuItem>({
     name: '',
     price: '',
+    weight: '',
+    calories: '',
     image: null,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,7 +52,7 @@ const AdminMenu = () => {
   const handleAddItem = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (!newItem.name || !newItem.price || !newItem.image) {
+    if (!newItem.name || !newItem.price || !newItem.weight || !newItem.calories || !newItem.image) {
       alert('Please fill all fields and upload an image');
       return;
     }
@@ -54,6 +60,8 @@ const AdminMenu = () => {
     const formData = new FormData();
     formData.append('name', newItem.name);
     formData.append('price', newItem.price);
+    formData.append('weight', newItem.weight);
+    formData.append('calories', newItem.calories);
     formData.append('image', newItem.image);
 
     try {
@@ -61,7 +69,7 @@ const AdminMenu = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setMenuItems([...menuItems, res.data]);
-      setNewItem({ name: '', price: '', image: null }); // Reset form
+      setNewItem({ name: '', price: '', weight:'',calories:'', image: null }); // Reset form
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -111,6 +119,28 @@ const AdminMenu = () => {
             />
           </div>
           <div>
+            <label className="block font-medium text-gray-700">Weight:</label>
+            <input
+              type="number"
+              name="weight"
+              placeholder="Weight"
+              value={newItem.weight}
+              onChange={handleInputChange}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label className="block font-medium text-gray-700">Calories:</label>
+            <input
+              type="number"
+              name="calories"
+              placeholder="Calories"
+              value={newItem.calories}
+              onChange={handleInputChange}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
             <label className="block font-medium text-gray-700">Image:</label>
             <input
               type="file"
@@ -133,6 +163,10 @@ const AdminMenu = () => {
           <div key={item._id} className="bg-white shadow-md p-4 rounded-lg">
             <img src={`http://localhost:3001${item.image}`} alt={item.name} className="w-full h-32 object-cover rounded mb-4" />
             <h3 className="text-lg font-bold mb-2">{item.name}</h3>
+            <div className="mb-3 [&_p]:text-base [&_p]:font-normal">
+                  <p>{item.weight}g</p>
+                  <p>{item.calories}Kcal</p>
+                </div>
             <p className="text-green-600 font-bold mb-4">Rs. {item.price}</p>
             <button onClick={() => handleDelete(item._id)} className="w-full bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors duration-200">
               Delete

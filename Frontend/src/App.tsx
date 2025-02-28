@@ -13,8 +13,9 @@ import MainLayout from "./components/MainLayout";
 import DashboardLayout from "./components/DashboardLayout";
 import AdminMenu from "./pages/AdminMenu";
 import PrivateRoute from "./routes/PrivateRoutes";
-import Movie from "./pages/Movie";
+import Movie from "./pages/AdminMovie";
 import MovieAllocation from "./pages/MovieAllocation";
+import Menu from "./pages/Menu";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -40,6 +41,7 @@ const App: React.FC = () => {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/movies" element={<Movies />} />
+          <Route path="/menu" element={<Menu />} />
         </Route>
 
         <Route element={<PrivateRoute />}>

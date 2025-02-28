@@ -4,7 +4,7 @@ import logo from "../assets/images/moviemate-logo.svg";
 const Footer = () => {
   return (
     <footer className="bg-[#F6F6F6] py-12 px-6 sm:px-8 lg:px-16">
-      <div className="max-w-7xl mx-auto flex max-lg:flex-wrap lg:flex-row gap-y-10 gap-x-20">
+      <div className="container mx-auto flex max-lg:flex-wrap lg:flex-row gap-y-10 gap-x-20">
         {/* Logo and Description Section */}
         <div className="flex flex-col items-start space-y-4 max-w-[360px]">
           <img src={logo} alt="MovieMate Logo" className="w-[180px]" />
