@@ -2,6 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import fs from 'fs';
 import Movie from '../models/Movie.js';
 import Room from '../models/Room.js';
 import Booking from '../models/Booking.js';  
@@ -49,7 +50,7 @@ const addMovie = async (req, res) => {
   }
 };
 
-// Middleware to handle file upload for adding a movie
+// Middleware to handle file upload for adding or updating a movie
 const uploadMovie = upload.single('image'); // 'image' is the field name used in FormData
 
 // Get all movies
@@ -63,18 +64,105 @@ const getMovies = async (req, res) => {
   }
 };
 
-// Get showtimes for a specific movie
-// export const getShowtimes = async (req, res) => {
-//   try {
-//     const { movieId } = req.params;
-//     const rooms = await Room.find({ "showtimes.movie_id": movieId }, "name showtimes");
-//     res.status(200).json({ success: true, rooms });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// };
+// Get a single movie by ID
+const getMovieById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const movie = await Movie.findById(id);
+    
+    if (!movie) {
+      return res.status(404).json({ message: "Movie not found" });
+    }
+    
+    res.status(200).json({ movie });
+  } catch (error) {
+    console.error("Error fetching movie:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
-export const getShowtimes = async (req, res) => {
+// Update a movie
+const updateMovie = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, duration, start_date, end_date, status, type } = req.body;
+    
+    const movie = await Movie.findById(id);
+    if (!movie) {
+      return res.status(404).json({ message: "Movie not found" });
+    }
+    
+    // Update movie details
+    movie.title = title || movie.title;
+    movie.description = description || movie.description;
+    movie.duration = duration || movie.duration;
+    movie.start_date = start_date || movie.start_date;
+    movie.end_date = end_date || movie.end_date;
+    movie.status = status || movie.status;
+    movie.type = type || movie.type;
+    
+    // Update image if a new one is provided
+    if (req.file) {
+      // Remove old image if exists and it's not the default image
+      if (movie.image && movie.image.startsWith('/uploads/')) {
+        try {
+          const oldImagePath = path.join(__dirname, '..', movie.image);
+          if (fs.existsSync(oldImagePath)) {
+            fs.unlinkSync(oldImagePath);
+          }
+        } catch (err) {
+          console.error("Error deleting old image:", err);
+          // Continue even if image deletion fails
+        }
+      }
+      
+      // Set new image path
+      movie.image = `/uploads/${req.file.filename}`;
+    }
+    
+    await movie.save();
+    
+    res.status(200).json({ message: "Movie updated successfully", movie });
+  } catch (error) {
+    console.error("Error updating movie:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Delete a movie
+const deleteMovie = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const movie = await Movie.findById(id);
+    if (!movie) {
+      return res.status(404).json({ message: "Movie not found" });
+    }
+    
+    // Remove image file if exists
+    if (movie.image && movie.image.startsWith('/uploads/')) {
+      try {
+        const imagePath = path.join(__dirname, '..', movie.image);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      } catch (err) {
+        console.error("Error deleting image:", err);
+        // Continue even if image deletion fails
+      }
+    }
+    
+    await Movie.findByIdAndDelete(id);
+    
+    res.status(200).json({ message: "Movie deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting movie:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get showtimes for a specific movie
+const getShowtimes = async (req, res) => {
   try {
     const { movieId } = req.params;
 
@@ -96,9 +184,8 @@ export const getShowtimes = async (req, res) => {
   }
 };
 
-
 // Get available seats for a specific showtime
-export const getAvailableSeats = async (req, res) => {
+const getAvailableSeats = async (req, res) => {
   try {
     const { showtimeId } = req.params;
     const room = await Room.findOne({ "showtimes._id": showtimeId }, { "showtimes.$": 1 });
@@ -110,7 +197,7 @@ export const getAvailableSeats = async (req, res) => {
 };
 
 // Book seats
-export const bookSeats = async (req, res) => {
+const bookSeats = async (req, res) => {
   try {
     const { user_id, movie_id, room_id, date, time_slot, seats } = req.body;
 
@@ -138,4 +225,14 @@ export const bookSeats = async (req, res) => {
   }
 };
 
-export { addMovie, uploadMovie, getMovies };
+export { 
+  addMovie, 
+  uploadMovie, 
+  getMovies, 
+  getMovieById, 
+  updateMovie, 
+  deleteMovie, 
+  getShowtimes, 
+  getAvailableSeats, 
+  bookSeats 
+};

@@ -1,32 +1,28 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
+import axios from "axios";
 import Burger from "../assets/images/burger-banner.png";
 import Menu from "../assets/images/menu-banner.png";
 import Chicken from "../assets/images/chicken-banner.png";
-import avatar from "../assets/images/avatar.jpg";
-import venom from "../assets/images/venom.jpg";
-import bloodshot from "../assets/images/bloodshot.jpeg";
-import gold from "../assets/images/gold.jpg";
-import flash from "../assets/images/flash.jpg";
-import john from "../assets/images/john.jpeg";
-import mission from "../assets/images/mission.jpg";
-import black from "../assets/images/black-panther.jpg";
-import popcorn_platter from "../assets/images/popcorn-platter.png";
-import ham from "../assets/images/ham-burger.png";
-import ranch from "../assets/images/ranch-chicken.png";
-import large from "../assets/images/large-nachos-drinks.png";
 
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
-import { Autoplay, Pagination, Navigation } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 
 // Define TypeScript interfaces
-interface MovieItem {
+interface Movie {
+  _id: string;
   title: string;
-  genre: string;
+  description: string;
+  duration: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  type: string;
   image: string;
 }
 
@@ -38,12 +34,44 @@ interface FoodItem {
   image: string;
 }
 
-type TabType = "nowShowing" | "upcoming";
+type TabType = "current" | "upcoming";
 
 export default function Home(): JSX.Element {
-  const [activeTab, setActiveTab] = useState<TabType>("nowShowing");
+  const [activeTab, setActiveTab] = useState<TabType>("current");
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [currentMovies, setCurrentMovies] = useState<Movie[]>([]);
+  const [upcomingMovies, setUpcomingMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const movieScrollRef = useRef<HTMLDivElement | null>(null);
-  const foodScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Fetch movies from the API
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get("http://localhost:3001/api/movie");
+        const allMovies = response.data.movies || [];
+        
+        setMovies(allMovies);
+        
+        // Filter current and upcoming movies
+        const current = allMovies.filter((movie: Movie) => movie.type === "current");
+        const upcoming = allMovies.filter((movie: Movie) => movie.type === "upcoming");
+        
+        setCurrentMovies(current);
+        setUpcomingMovies(upcoming);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching movies:", err);
+        setError("Failed to load movies");
+        setLoading(false);
+      }
+    };
+
+    fetchMovies();
+  }, []);
 
   const scroll = (
     ref: React.RefObject<HTMLDivElement>,
@@ -61,119 +89,20 @@ export default function Home(): JSX.Element {
     }
   };
 
-  const nowShowingMovies: MovieItem[] = [
-    {
-      title: "Avatar",
-      genre: "Sci-Fi/Action",
-      image: avatar,
-    },
-    {
-      title: "Venom 2",
-      genre: "Action/Sci-fi",
-      image: venom,
-    },
-    {
-      title: "Bloodshot",
-      genre: "Action/Sci-fi",
-      image: bloodshot,
-    },
-    {
-      title: "The City of Gold",
-      genre: "Adventure/Thriller",
-      image: gold,
-    },
-    {
-      title: "Venom 2",
-      genre: "Action/Sci-fi",
-      image: venom,
-    },
-    {
-      title: "Bloodshot",
-      genre: "Action/Sci-fi",
-      image: bloodshot,
-    },
-  ];
+  // Get current active movies based on tab
+  const activeMovies = activeTab === "current" ? currentMovies : upcomingMovies;
 
-  const upcomingMovies: MovieItem[] = [
-    {
-      title: "Black Panther 2",
-      genre: "Action/Adventure",
-      image: black,
-    },
-    {
-      title: "The Flash",
-      genre: "Action/Sci-fi",
-      image: flash,
-    },
-    {
-      title: "John Wick 4",
-      genre: "Action/Thriller",
-      image: john,
-    },
-    {
-      title: "Mission Impossible 7",
-      genre: "Action/Spy",
-      image: mission,
-    },
-    {
-      title: "Black Panther 2",
-      genre: "Action/Adventure",
-      image: black,
-    },
-    {
-      title: "The Flash",
-      genre: "Action/Sci-fi",
-      image: flash,
-    },
-  ];
-
-  const foodItems: FoodItem[] = [
-    {
-      name: "Popcorn Platter",
-      weight: "100g",
-      calories: "500Kcal",
-      price: "Rs. 899",
-      image: popcorn_platter,
-    },
-    {
-      name: "Large Nacho & Drink",
-      weight: "310g",
-      calories: "600Kcal",
-      price: "Rs. 699",
-      image: large,
-    },
-    {
-      name: "Ham Burger w/ Fries & Drink",
-      weight: "410g",
-      calories: "800Kcal",
-      price: "Rs. 899",
-      image: ham,
-    },
-    {
-      name: "Ranch Chicken Wrap",
-      weight: "400g",
-      calories: "402Kcal",
-      price: "Rs. 299",
-      image: ranch,
-    },
-    {
-      name: "Popcorn Platter",
-      weight: "100g",
-      calories: "500Kcal",
-      price: "Rs. 899",
-      image: popcorn_platter,
-    },
-    {
-      name: "Large Nacho & Drink",
-      weight: "310g",
-      calories: "600Kcal",
-      price: "Rs. 699",
-      image: large,
-    },
-  ];
-
-  const currentMovies: MovieItem[] =
-    activeTab === "nowShowing" ? nowShowingMovies : upcomingMovies;
+  // Format the duration
+  const formatDuration = (minutes: string) => {
+    const mins = parseInt(minutes, 10);
+    const hours = Math.floor(mins / 60);
+    const remainingMins = mins % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${remainingMins}m`;
+    }
+    return `${mins}m`;
+  };
 
   return (
     <>
@@ -227,9 +156,9 @@ export default function Home(): JSX.Element {
           </h2>
           <div className="flex flex-wrap gap-8 mb-4">
             <button
-              onClick={() => setActiveTab("nowShowing")}
+              onClick={() => setActiveTab("current")}
               className={`py-2 text-lg transition-colors duration-200 ${
-                activeTab === "nowShowing"
+                activeTab === "current"
                   ? "text-black"
                   : "text-[#5F6C75] hover:text-black"
               }`}
@@ -249,49 +178,67 @@ export default function Home(): JSX.Element {
           </div>
 
           <div className="relative">
-            <div
-              ref={movieScrollRef}
-              className="flex gap-4 overflow-x-auto pb-4 transition-all duration-300 scroll-smooth"
-            >
-              {currentMovies.map((movie, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 md:max-w-[295px] rounded-2xl overflow-hidden transform hover:scale-105 transition-transform duration-200"
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : error ? (
+              <div className="text-center py-6 text-red-500">{error}</div>
+            ) : activeMovies.length === 0 ? (
+              <div className="text-center py-6 text-gray-500">
+                No {activeTab} movies available
+              </div>
+            ) : (
+              <div
+                ref={movieScrollRef}
+                className="flex gap-4 overflow-x-auto pb-4 transition-all duration-300 scroll-smooth"
+              >
+                {activeMovies.map((movie) => (
+                  <Link 
+                    to={`/movies`} 
+                    key={movie._id}
+                    className="flex-shrink-0 md:max-w-[295px] rounded-2xl overflow-hidden transform hover:scale-105 transition-transform duration-200"
+                  >
+                    <div className="h-[320px] sm:h-[350px] md:h-[395px] lg:h-[417px] rounded-2xl overflow-hidden">
+                      <img
+                        src={`http://localhost:3001${movie.image}`}
+                        alt={movie.title}
+                        width={295}
+                        height={417}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-medium text-sm sm:text-lg md:text-xl lg:text-2xl">
+                        {movie.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm md:text-lg font-light">
+                        {formatDuration(movie.duration)}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+            
+            {activeMovies.length > 0 && (
+              <>
+                <button
+                  onClick={() => scroll(movieScrollRef, "left")}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow-md hover:bg-white transition-colors z-10"
+                  aria-label="Scroll movies left"
                 >
-                  <div className="h-[320px] sm:h-[350px] md:h-[395px] lg:h-[417px] rounded-2xl overflow-hidden">
-                    <img
-                      src={movie.image}
-                      alt={movie.title}
-                      width={295}
-                      height={417}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-medium text-sm sm:text-lg md:text-xl lg:text-2xl">
-                      {movie.title}
-                    </h3>
-                    <p className="text-xs sm:text-sm md:text-lg font-light">
-                      {movie.genre}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => scroll(movieScrollRef, "left")}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow-md hover:bg-white transition-colors z-10"
-              aria-label="Scroll movies left"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button
-              onClick={() => scroll(movieScrollRef, "right")}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow-md hover:bg-white transition-colors z-10"
-              aria-label="Scroll movies right"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={() => scroll(movieScrollRef, "right")}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow-md hover:bg-white transition-colors z-10"
+                  aria-label="Scroll movies right"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
