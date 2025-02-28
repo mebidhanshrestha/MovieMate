@@ -2,7 +2,8 @@ import { useState, ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/images/moviemate-logo.svg";
 import { Link } from "react-router-dom";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import api from "../config/api";
 
 interface FormData {
   email: string;
@@ -39,10 +40,7 @@ const Login = (): JSX.Element => {
     e.preventDefault();
     try {
       // First login to get token
-      const loginRes = await axios.post<LoginResponse>(
-        "http://localhost:3001/api/users/login",
-        formData
-      );
+      const loginRes = await api.post<LoginResponse>('/api/users/login', formData);
 
       // Store auth data
       localStorage.setItem("token", loginRes.data.token);
@@ -51,14 +49,7 @@ const Login = (): JSX.Element => {
 
       // After successful login, fetch user details to get name and email
       try {
-        const userRes = await axios.get(
-          `http://localhost:3001/api/users/${loginRes.data.id}`,
-          {
-            headers: {
-              Authorization: loginRes.data.token,
-            },
-          }
-        );
+        const userRes = await api.get(`/api/users/${loginRes.data.id}`);
 
         // Store additional user data
         if (userRes.data) {
@@ -234,10 +225,7 @@ const ForgotPasswordModal = ({
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:3001/api/users/forgot-password",
-        { email }
-      );
+      const response = await api.post('/api/users/forgot-password', { email });
 
       setSuccess("OTP has been sent to your email address");
       setStep(2);
@@ -249,8 +237,6 @@ const ForgotPasswordModal = ({
       setLoading(false);
     }
   };
-
-  // Update the handleOtpSubmit function in your ForgotPasswordModal component
 
   const handleOtpSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -265,10 +251,7 @@ const ForgotPasswordModal = ({
 
     try {
       // Verify OTP is valid before proceeding to reset password
-      const response = await axios.post(
-        "http://localhost:3001/api/users/verify-otp",
-        { email, otp }
-      );
+      const response = await api.post('/api/users/verify-otp', { email, otp });
 
       if (response.data.valid) {
         setStep(3); // Proceed to password reset step
@@ -302,7 +285,7 @@ const ForgotPasswordModal = ({
     }
 
     try {
-      await axios.post("http://localhost:3001/api/users/reset-password", {
+      await api.post('/api/users/reset-password', {
         email,
         otp,
         newPassword,

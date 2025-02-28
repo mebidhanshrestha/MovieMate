@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../config/api';
 import { Search, Edit, Trash2, Key, Award, User, Mail, UserCog, X, Check, Save, ChevronRight } from 'lucide-react';
-
-// Define the API base URL at component level for easy maintenance
-const API_BASE_URL = 'http://localhost:3001'; // Adjust this to match your backend URL
 
 // Define TypeScript interfaces
 interface User {
@@ -63,7 +60,6 @@ const AdminUserManagement: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Safely handle response
       if (!token) {
         console.error("No token available");
         setError("Authentication token missing. Please log in again.");
@@ -71,17 +67,13 @@ const AdminUserManagement: React.FC = () => {
         return;
       }
       
-      const response = await axios.get(`${API_BASE_URL}/api/users`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+      const response = await api.get(`${import.meta.env.VITE_API_BASE_URL}/api/users`);
+      
       console.log("API Response:", response.data);
       
-      // Check if response.data exists and is an array
       if (response.data && Array.isArray(response.data)) {
         setUsers(response.data);
       } else if (response.data && typeof response.data === 'object' && Array.isArray(response.data.data)) {
-        // Some APIs nest data in a data property
         setUsers(response.data.data);
       } else {
         console.error("Unexpected API response format:", response.data);
@@ -104,9 +96,7 @@ const AdminUserManagement: React.FC = () => {
     try {
       setLoyaltyLoading(true);
       
-      const response = await axios.get(`${API_BASE_URL}/api/loyalty-points/user/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get(`${import.meta.env.VITE_API_BASE_URL}/api/loyalty-points/user/${userId}`);
       
       // Safely extract points from response
       const points = response.data?.data?.points || 0;
@@ -168,7 +158,7 @@ const AdminUserManagement: React.FC = () => {
     try {
       setLoading(true);
       
-      await axios.put(`${API_BASE_URL}/api/users/${selectedUser._id}`, formData, {
+      await api.put(`${import.meta.env.VITE_API_BASE_URL}/api/users/${selectedUser._id}`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchUsers();
@@ -189,7 +179,7 @@ const AdminUserManagement: React.FC = () => {
     try {
       setLoading(true);
       
-      await axios.delete(`${API_BASE_URL}/api/users/${selectedUser._id}`, {
+      await api.delete(`${import.meta.env.VITE_API_BASE_URL}/api/users/${selectedUser._id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchUsers();
@@ -215,12 +205,12 @@ const AdminUserManagement: React.FC = () => {
       
       // Check if loyalty points exist for this user
       try {
-        await axios.get(`${API_BASE_URL}/api/loyalty-points/user/${selectedUser._id}`, {
+        await api.get(`${import.meta.env.VITE_API_BASE_URL}/api/loyalty-points/user/${selectedUser._id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
         // If found, update the existing points
-        await axios.put(`${API_BASE_URL}/api/loyalty-points/user/${selectedUser._id}`, {
+        await api.put(`${import.meta.env.VITE_API_BASE_URL}/api/loyalty-points/user/${selectedUser._id}`, {
           points: loyaltyPoints.points
         }, {
           headers: { Authorization: `Bearer ${token}` }
@@ -228,7 +218,7 @@ const AdminUserManagement: React.FC = () => {
       } catch (err: any) {
         // If not found (404), create new loyalty points
         if (err.response?.status === 404) {
-          await axios.post(`${API_BASE_URL}/api/loyalty-points`, {
+          await api.post(`${import.meta.env.VITE_API_BASE_URL}/api/loyalty-points`, {
             user_id: selectedUser._id,
             points: loyaltyPoints.points
           }, {

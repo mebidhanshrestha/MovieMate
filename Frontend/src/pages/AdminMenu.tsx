@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, ChangeEvent, FormEvent } from 'react';
-import axios from 'axios';
+import api from '../config/api';
 import Popup from '../components/Popup'; // Adjust the import path as needed
 
 // Define interfaces for our data types
@@ -36,6 +36,8 @@ interface PopupConfig {
 
 const AdminMenu = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newItem, setNewItem] = useState<NewMenuItem>({
     name: '',
     price: '',
@@ -84,25 +86,29 @@ const AdminMenu = () => {
     });
   };
 
+  // Helper function to get image URL
+  const getImageUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `${import.meta.env.VITE_API_BASE_URL}${path}`;
+  };
+
   useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get<MenuItem[]>(`${import.meta.env.VITE_API_BASE_URL}/api/menu`);
+        setMenuItems(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching menu items:', error);
+        setError('Failed to load menu items');
+        setLoading(false);
+      }
+    };
+
     fetchMenuItems();
   }, []);
-
-  const fetchMenuItems = () => {
-    axios.get<MenuItem[]>('http://localhost:3001/api/menu')
-      .then(res => setMenuItems(res.data))
-      .catch(err => {
-        console.error(err);
-        showPopup({
-          title: "Error",
-          message: "Failed to fetch menu items. Please try again.",
-          primaryButton: {
-            text: "OK",
-            onClick: closePopup
-          }
-        });
-      });
-  };
 
   // Handle file change for new item
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -131,32 +137,23 @@ const AdminMenu = () => {
   // Handle form submission for new item
   const handleAddItem = async (e: FormEvent) => {
     e.preventDefault();
-    
-    if (!newItem.name || !newItem.price || !newItem.weight || !newItem.calories || !newItem.image) {
-      showPopup({
-        title: "Missing Information",
-        message: "Please fill all fields and upload an image",
-        primaryButton: {
-          text: "OK",
-          onClick: closePopup
-        }
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('name', newItem.name);
-    formData.append('price', newItem.price);
-    formData.append('weight', newItem.weight);
-    formData.append('calories', newItem.calories);
-    formData.append('image', newItem.image);
-
     try {
-      const res = await axios.post<MenuItem>('http://localhost:3001/api/menu/add', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('name', newItem.name);
+      formData.append('price', newItem.price);
+      formData.append('weight', newItem.weight);
+      formData.append('calories', newItem.calories);
+      formData.append('image', newItem.image);
+
+      const res = await api.post<MenuItem>(`${import.meta.env.VITE_API_BASE_URL}/api/menu/add`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
+
       setMenuItems([...menuItems, res.data]);
-      setNewItem({ name: '', price: '', weight: '', calories: '', image: null }); // Reset form
+      setNewItem({ name: '', price: '', weight: '', calories: '', image: null });
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -170,15 +167,10 @@ const AdminMenu = () => {
         }
       });
     } catch (error) {
-      console.error(error);
-      showPopup({
-        title: "Error",
-        message: "Failed to add menu item. Please try again.",
-        primaryButton: {
-          text: "OK",
-          onClick: closePopup
-        }
-      });
+      console.error('Error adding menu item:', error);
+      setError('Failed to add menu item');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -215,44 +207,26 @@ const AdminMenu = () => {
   // Submit edit form
   const handleUpdateItem = async (e: FormEvent) => {
     e.preventDefault();
-    
-    if (!editingItem) return;
-    
-    if (!editFormData.name || !editFormData.price || !editFormData.weight || !editFormData.calories) {
-      showPopup({
-        title: "Missing Information",
-        message: "Please fill all fields",
-        primaryButton: {
-          text: "OK",
-          onClick: closePopup
-        }
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('name', editFormData.name);
-    formData.append('price', editFormData.price);
-    formData.append('weight', editFormData.weight);
-    formData.append('calories', editFormData.calories);
-    
-    // Only append image if a new one was selected
-    if (editFormData.image) {
-      formData.append('image', editFormData.image);
-    }
-
     try {
-      const res = await axios.put<MenuItem>(
-        `http://localhost:3001/api/menu/update/${editingItem._id}`, 
-        formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        }
-      );
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('name', editFormData.name);
+      formData.append('price', editFormData.price);
+      formData.append('weight', editFormData.weight);
+      formData.append('calories', editFormData.calories);
       
-      // Update the menu items list with the updated item
+      if (editFormData.image) {
+        formData.append('image', editFormData.image);
+      }
+
+      await api.put(`${import.meta.env.VITE_API_BASE_URL}/api/menu/update/${editingItem._id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
       setMenuItems(menuItems.map(item => 
-        item._id === editingItem._id ? res.data : item
+        item._id === editingItem._id ? { ...item, ...formData } : item
       ));
       
       showPopup({
@@ -262,7 +236,6 @@ const AdminMenu = () => {
           text: "OK",
           onClick: () => {
             closePopup();
-            // Reset the edit form and state
             setIsEditing(false);
             setEditingItem(null);
             if (editFileInputRef.current) {
@@ -272,15 +245,10 @@ const AdminMenu = () => {
         }
       });
     } catch (error) {
-      console.error(error);
-      showPopup({
-        title: "Error",
-        message: "Failed to update menu item. Please try again.",
-        primaryButton: {
-          text: "OK",
-          onClick: closePopup
-        }
-      });
+      console.error('Error updating menu item:', error);
+      setError('Failed to update menu item');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -306,9 +274,9 @@ const AdminMenu = () => {
   // Handle deleting menu item
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:3001/api/menu/delete/${id}`);
+      setLoading(true);
+      await api.delete(`${import.meta.env.VITE_API_BASE_URL}/api/menu/delete/${id}`);
       setMenuItems(menuItems.filter(item => item._id !== id));
-      
       showPopup({
         title: "Success",
         message: "Menu item deleted successfully!",
@@ -318,15 +286,10 @@ const AdminMenu = () => {
         }
       });
     } catch (error) {
-      console.error(error);
-      showPopup({
-        title: "Error",
-        message: "Failed to delete menu item. Please try again.",
-        primaryButton: {
-          text: "OK",
-          onClick: closePopup
-        }
-      });
+      console.error('Error deleting menu item:', error);
+      setError('Failed to delete menu item');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -411,7 +374,7 @@ const AdminMenu = () => {
                   <div className="mt-2 md:mt-0">
                     <p className="text-sm text-gray-500 mb-1">Current image:</p>
                     <img 
-                      src={`http://localhost:3001${editingItem.image}`} 
+                      src={getImageUrl(editingItem.image)} 
                       alt={editingItem.name} 
                       className="w-24 h-24 object-cover rounded-lg shadow-md border border-gray-200" 
                     />
@@ -516,7 +479,7 @@ const AdminMenu = () => {
           <div key={item._id} className="bg-white shadow-lg hover:shadow-xl rounded-lg overflow-hidden transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
             <div className="relative">
               <img 
-                src={`http://localhost:3001${item.image}`} 
+                src={getImageUrl(item.image)} 
                 alt={item.name} 
                 className="w-full h-48 object-cover"
               />

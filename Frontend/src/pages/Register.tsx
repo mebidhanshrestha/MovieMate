@@ -2,7 +2,8 @@ import { useState, ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/images/moviemate-logo.svg";
 import { Link } from "react-router-dom";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import api from "../config/api";
 
 interface FormData {
   name: string;
@@ -28,7 +29,7 @@ const Register = (): JSX.Element => {
     e.preventDefault();
     console.log(formData);
     try {
-      await axios.post("http://localhost:3001/api/users/register", formData);
+      await api.post("/api/users/register", formData);
       navigate("/login");
     } catch (err) {
       const axiosError = err as AxiosError<{ message: string }>;

@@ -61,7 +61,7 @@ const AlertDisplay: React.FC<AlertDisplayProps> = ({ userId }) => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const response = await axios.get("http://localhost:3001/api/alerts/user", {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/alerts/user`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -80,7 +80,7 @@ const AlertDisplay: React.FC<AlertDisplayProps> = ({ userId }) => {
       if (!token) return;
 
       const response = await axios.get(
-        "http://localhost:3001/api/alerts/user/unread",
+        `${import.meta.env.VITE_API_BASE_URL}/api/alerts/user/unread`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -95,7 +95,6 @@ const AlertDisplay: React.FC<AlertDisplayProps> = ({ userId }) => {
   };
 
   const markAsRead = async (alertId: string, event?: React.MouseEvent) => {
-    // If an event is provided, stop it from propagating
     if (event) {
       event.stopPropagation();
     }
@@ -104,9 +103,8 @@ const AlertDisplay: React.FC<AlertDisplayProps> = ({ userId }) => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      // Make the API call to mark as read
       await axios.patch(
-        `http://localhost:3001/api/alerts/${alertId}/read`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/alerts/${alertId}/read`,
         {},
         {
           headers: {
@@ -115,14 +113,12 @@ const AlertDisplay: React.FC<AlertDisplayProps> = ({ userId }) => {
         }
       );
 
-      // Update the alerts state
       setAlerts(prevAlerts => 
         prevAlerts.map(alert => 
           alert._id === alertId ? { ...alert, read: true } : alert
         )
       );
       
-      // Update unread count
       setUnreadCount(prev => Math.max(0, prev - 1));
       
       console.log(`Alert ${alertId} marked as read`);
@@ -140,7 +136,7 @@ const AlertDisplay: React.FC<AlertDisplayProps> = ({ userId }) => {
 
       // Make the API call to mark all as read
       await axios.patch(
-        "http://localhost:3001/api/alerts/user/read-all",
+        `${import.meta.env.VITE_API_BASE_URL}/api/alerts/user/read-all`,
         {},
         {
           headers: {

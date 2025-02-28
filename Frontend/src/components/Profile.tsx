@@ -67,7 +67,7 @@ const Profile: React.FC = () => {
         console.log("Token and userId found, fetching user data");
 
         const response = await axios.get(
-          `http://localhost:3001/api/users/${userId}`,
+          `${import.meta.env.VITE_API_BASE_URL}/api/users/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -75,7 +75,7 @@ const Profile: React.FC = () => {
           }
         );
 
-        console.log("API Response:", response.data); // Debugging API response
+        console.log("API Response:", response.data);
 
         setUser({
           _id: response.data._id,
@@ -84,7 +84,6 @@ const Profile: React.FC = () => {
           role: response.data.role || "user",
         });
 
-        // Initialize form data with current user data
         setEditProfileFormData({
           name: response.data.name,
           email: response.data.email,
@@ -147,7 +146,7 @@ const Profile: React.FC = () => {
       }
 
       const response = await axios.put(
-        `http://localhost:3001/api/users/${userId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/users/${userId}`,
         editProfileFormData,
         {
           headers: {
@@ -217,7 +216,7 @@ const Profile: React.FC = () => {
       }
 
       const response = await axios.put(
-        `http://localhost:3001/api/users/${userId}/password`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/users/${userId}/password`,
         {
           currentPassword: passwordFormData.currentPassword,
           newPassword: passwordFormData.newPassword,

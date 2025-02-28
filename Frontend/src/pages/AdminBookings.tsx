@@ -162,7 +162,7 @@ function AdminBookings() {
       }
       
       const roomResponse = await axios.post(
-        "http://localhost:3001/api/room/therater",
+        `${import.meta.env.VITE_API_BASE_URL}/api/room/therater`,
         { room_id: roomId }
       );
       
@@ -201,7 +201,7 @@ function AdminBookings() {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/movie/");
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/movie/`);
         const activeMovies = response.data.movies.filter(
           (movie: Movie) => movie.status === "hosting"
         );
@@ -327,11 +327,11 @@ function AdminBookings() {
 
         const [bookingsRes, menuItemsRes, usersRes, moviesRes, roomsRes] =
           await Promise.all([
-            authAxios.get("http://localhost:3001/api/booking-management/all"),
-            authAxios.get("http://localhost:3001/api/menu"),
-            authAxios.get("http://localhost:3001/api/users"),
-            authAxios.get("http://localhost:3001/api/movie"),
-            authAxios.get("http://localhost:3001/api/room"),
+            authAxios.get(`${import.meta.env.VITE_API_BASE_URL}/api/booking-management/all`),
+            authAxios.get(`${import.meta.env.VITE_API_BASE_URL}/api/menu`),
+            authAxios.get(`${import.meta.env.VITE_API_BASE_URL}/api/users`),
+            authAxios.get(`${import.meta.env.VITE_API_BASE_URL}/api/movie`),
+            authAxios.get(`${import.meta.env.VITE_API_BASE_URL}/api/room`),
           ]);
         
         const roomsData = roomsRes.data.rooms || [];
@@ -656,7 +656,7 @@ function AdminBookings() {
                       <>
                         {item.menuDetails.image && (
                           <img
-                            src={`http://localhost:3001${item.menuDetails.image}`}
+                            src={`${import.meta.env.VITE_API_BASE_URL}${item.menuDetails.image}`}
                             alt={item.menuDetails.name}
                             className="w-12 h-12 object-cover rounded mr-2"
                           />

@@ -33,7 +33,7 @@ const NotificationCenter: React.FC = () => {
         return;
       }
 
-      const response = await axios.get("http://localhost:3001/api/alerts/user", {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/alerts/user`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -58,7 +58,7 @@ const NotificationCenter: React.FC = () => {
       if (!token) return;
 
       await axios.patch(
-        `http://localhost:3001/api/alerts/${alertId}/read`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/alerts/${alertId}/read`,
         {},
         {
           headers: {
@@ -88,7 +88,7 @@ const NotificationCenter: React.FC = () => {
       if (!token) return;
 
       await axios.patch(
-        "http://localhost:3001/api/alerts/user/read-all",
+        `${import.meta.env.VITE_API_BASE_URL}/api/alerts/user/read-all`,
         {},
         {
           headers: {

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import axios from "axios";
+import api from "../config/api";
 
 // Import Swiper styles
 import "swiper/css";
@@ -58,7 +58,7 @@ export default function Home(): JSX.Element {
       try {
         setBannersLoading(true);
         console.log("Fetching banners from API...");
-        const response = await axios.get("http://localhost:3001/api/banner/active");
+        const response = await api.get("/api/banner/active");
         console.log("Banner response:", response.data);
         const activeBanners = response.data || [];
         
@@ -79,7 +79,7 @@ export default function Home(): JSX.Element {
     const fetchMovies = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:3001/api/movie");
+        const response = await api.get("/api/movie");
         const allMovies = response.data.movies || [];
         
         // Filter out movies with "expired" status - only keep "hosting" status
@@ -152,27 +152,25 @@ export default function Home(): JSX.Element {
     }
   }, [banners]);
 
-  const getBannerImageUrl = (banner: Banner) => {
-    // If it's a fallback image (from imports)
-    if (typeof banner.image === 'string' && !banner.image.startsWith('/')) {
-      return banner.image;
-    }
-    
-    // For uploaded images from the server
-    const path = banner.image;
-    
-    // If path already starts with /uploads, don't add it again
-    if (path.startsWith('/uploads/')) {
-      return `http://localhost:3001${path}`;
-    } 
-    // If path starts with /banners (new format), add the /uploads prefix
-    else if (path.startsWith('/banners/')) {
-      return `http://localhost:3001/uploads${path}`;
-    }
-    // Fallback for any other format
-    else {
-      return `http://localhost:3001/uploads${path.startsWith('/') ? path : `/${path}`}`;
-    }
+  // Helper function to get image URL
+  const getImageUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `${import.meta.env.VITE_API_BASE_URL}${path}`;
+  };
+
+  // Helper function to get uploads URL
+  const getUploadsUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `${import.meta.env.VITE_API_BASE_URL}/uploads${path}`;
+  };
+
+  // Helper function to get safe uploads URL
+  const getSafeUploadsUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `${import.meta.env.VITE_API_BASE_URL}/uploads${path.startsWith('/') ? path : `/${path}`}`;
   };
 
   return (
@@ -209,12 +207,12 @@ export default function Home(): JSX.Element {
               displayBanners.map((banner) => (
                 <SwiperSlide key={banner._id}>
                   <img
-                    src={getBannerImageUrl(banner)}
+                    src={getSafeUploadsUrl(banner.image)}
                     alt={banner.altText}
                     className="w-full h-[300px] object-cover rounded-[16px] transition-transform duration-300"
                     loading="lazy"
                     onError={(e) => {
-                      console.error('Image failed to load:', getBannerImageUrl(banner));
+                      console.error('Image failed to load:', getSafeUploadsUrl(banner.image));
                       // Fallback to a placeholder if the image fails to load
                       (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x400?text=Image+Not+Found';
                     }}
@@ -277,7 +275,7 @@ export default function Home(): JSX.Element {
                   >
                     <div className="h-[320px] sm:h-[350px] md:h-[395px] lg:h-[417px] rounded-2xl overflow-hidden">
                       <img
-                        src={`http://localhost:3001${movie.image}`}
+                        src={getImageUrl(movie.image)}
                         alt={movie.title}
                         width={295}
                         height={417}

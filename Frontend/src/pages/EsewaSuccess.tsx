@@ -261,7 +261,7 @@ const EsewaSuccess: React.FC = () => {
       // Get user email
       try {
         const userResponse = await axios.get(
-          `http://localhost:3001/api/users/${userId}`
+          `${import.meta.env.VITE_API_BASE_URL}/api/users/${userId}`
         );
         if (!userResponse.data || !userResponse.data.email) {
           throw new Error("User email not found");
@@ -272,7 +272,7 @@ const EsewaSuccess: React.FC = () => {
 
         // Send email with receipt details
         const emailResponse = await axios.post(
-          "http://localhost:3001/api/users/send-ticket-receipt",
+          `${import.meta.env.VITE_API_BASE_URL}/api/users/send-ticket-receipt`,
           {
             userEmail,
             userName,
@@ -352,7 +352,7 @@ const EsewaSuccess: React.FC = () => {
         console.log("Sending booking data to create booking:", bookingData);
 
         const bookingResponse = await axios.post(
-          "http://localhost:3001/api/booking-management/booking/movie-book",
+          `${import.meta.env.VITE_API_BASE_URL}/api/booking-management/booking/movie-book`,
           bookingData
         );
 
@@ -378,7 +378,7 @@ const EsewaSuccess: React.FC = () => {
           }
 
           const roomResponse = await axios.post(
-            "http://localhost:3001/api/room/therater",
+            `${import.meta.env.VITE_API_BASE_URL}/api/room/therater`,
             { room_id: pendingBooking.room_id }
           );
 
@@ -433,7 +433,7 @@ const EsewaSuccess: React.FC = () => {
               `Trying to fetch showtime directly with ID: ${pendingBooking.time_slot}`
             );
             const showtimeResponse = await axios.get(
-              `http://localhost:3001/api/showtime/${pendingBooking.time_slot}`
+              `${import.meta.env.VITE_API_BASE_URL}/api/showtime/${pendingBooking.time_slot}`
             );
 
             if (showtimeResponse.data && showtimeResponse.data.showtime) {
@@ -449,7 +449,7 @@ const EsewaSuccess: React.FC = () => {
                 `Trying room/showtimes endpoint for room: ${pendingBooking.room_id}`
               );
               const roomShowtimesResponse = await axios.get(
-                `http://localhost:3001/api/room/${pendingBooking.room_id}/showtimes`
+                `${import.meta.env.VITE_API_BASE_URL}/api/room/${pendingBooking.room_id}/showtimes`
               );
 
               if (
@@ -481,7 +481,7 @@ const EsewaSuccess: React.FC = () => {
             `Fetching movie details for movie ID: ${pendingBooking.movie_id}`
           );
           const movieResponse = await axios.get(
-            `http://localhost:3001/api/movie/${pendingBooking.movie_id}`
+            `${import.meta.env.VITE_API_BASE_URL}/api/movie/${pendingBooking.movie_id}`
           );
 
           if (
@@ -503,7 +503,7 @@ const EsewaSuccess: React.FC = () => {
             console.log("Fetching details for menu items");
 
             const menuResponse = await axios.get(
-              "http://localhost:3001/api/menu"
+              `${import.meta.env.VITE_API_BASE_URL}/api/menu`
             );
             const allMenuItems = menuResponse.data || [];
 
@@ -541,12 +541,12 @@ const EsewaSuccess: React.FC = () => {
           if (loyaltyPointsEarned > 0) {
             try {
               const checkPointsResponse = await axios.get(
-                `http://localhost:3001/api/loyalty-points/user/${pendingBooking.user_id}`
+                `${import.meta.env.VITE_API_BASE_URL}/api/loyalty-points/user/${pendingBooking.user_id}`
               );
 
               if (checkPointsResponse.status === 200) {
                 await axios.put(
-                  `http://localhost:3001/api/loyalty-points/user/${pendingBooking.user_id}`,
+                  `${import.meta.env.VITE_API_BASE_URL}/api/loyalty-points/user/${pendingBooking.user_id}`,
                   {
                     points:
                       checkPointsResponse.data.data.points +
@@ -560,7 +560,7 @@ const EsewaSuccess: React.FC = () => {
             } catch (pointsError: any) {
               if (pointsError.response?.status === 404) {
                 try {
-                  await axios.post("http://localhost:3001/api/loyalty-points", {
+                  await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/loyalty-points`, {
                     user_id: pendingBooking.user_id,
                     points: loyaltyPointsEarned,
                   });

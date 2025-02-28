@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api from "../config/api";
 
 type Movie = {
   _id: string;
@@ -34,8 +34,8 @@ const MovieList = () => {
 
   useEffect(() => {
     setLoading(true);
-    axios
-      .get("http://localhost:3001/api/movie")
+    api
+      .get("/api/movie")
       .then((response) => {
         // Only keep movies with "hosting" status
         const activeMovies = response.data.movies.filter(
@@ -71,6 +71,13 @@ const MovieList = () => {
     if (activeTab === "upcoming") return movie.type === "upcoming";
     return true;
   });
+
+  // Helper function to get image URL
+  const getImageUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `${import.meta.env.VITE_API_BASE_URL}${path}`;
+  };
 
   if (loading) {
     return (
@@ -123,17 +130,19 @@ const MovieList = () => {
           No movies found for this category
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="flex flex-wrap gap-6">
           {filteredMovies.map((movie) => (
             <Link 
               to={`/showtimes/${movie._id}`} 
               key={movie._id}
-              className="flex-shrink-0 rounded-2xl overflow-hidden transform hover:scale-105 transition-transform duration-200"
+              className="flex-shrink-0 md:max-w-[295px] rounded-2xl overflow-hidden transform hover:scale-105 transition-transform duration-200 bg-white"
             >
-              <div className="h-[320px] sm:h-[350px] md:h-[395px] rounded-2xl overflow-hidden">
+              <div className="h-[320px] sm:h-[350px] md:h-[395px] lg:h-[417px] rounded-2xl overflow-hidden">
                 <img
-                  src={`http://localhost:3001${movie.image}`}
+                  src={getImageUrl(movie.image)}
                   alt={movie.title}
+                  width={295}
+                  height={417}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -142,14 +151,12 @@ const MovieList = () => {
                 />
               </div>
               <div className="p-4">
-                <h3 className="font-medium text-sm sm:text-lg md:text-xl">
+                <h3 className="font-medium text-sm sm:text-lg md:text-xl lg:text-2xl">
                   {movie.title}
                 </h3>
-                {movie.duration && (
-                  <p className="text-xs sm:text-sm text-gray-600 font-light">
-                    {formatDuration(movie.duration)}
-                  </p>
-                )}
+                <p className="text-xs sm:text-sm md:text-lg font-light">
+                  {formatDuration(movie.duration)}
+                </p>
               </div>
             </Link>
           ))}

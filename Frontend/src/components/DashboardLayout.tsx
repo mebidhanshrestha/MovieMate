@@ -97,7 +97,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
         const userId = decoded.id;
 
         // Fetch user data using /api/users/:id
-        const response = await axios.get(`http://localhost:3001/api/users/${userId}`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/users/${userId}`, {
           headers: {
             Authorization: token,
           },
@@ -130,7 +130,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
           return;
         }
 
-        const response = await axios.get("http://localhost:3001/api/notifications", {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/notifications`, {
           headers: {
             Authorization: token
           }
@@ -205,7 +205,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
       const token = localStorage.getItem('token');
       if (!token) return;
       
-      const response = await axios.get('http://localhost:3001/api/dashboard/metrics', {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/dashboard/metrics`, {
         headers: { Authorization: token }
       });
       
@@ -284,7 +284,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
       );
 
       // Update on server
-      await axios.patch(`http://localhost:3001/api/notifications/${id}/read`, {}, {
+      await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${id}/read`, {}, {
         headers: {
           Authorization: token
         }
@@ -316,7 +316,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
       );
 
       // Update on server
-      await axios.post(`http://localhost:3001/api/notifications/mark-all-read`, {}, {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/mark-all-read`, {}, {
         headers: {
           Authorization: token
         }
@@ -324,7 +324,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
       // Refresh notifications if server update fails
-      const response = await axios.get("http://localhost:3001/api/notifications", {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/notifications`, {
         headers: {
           Authorization: localStorage.getItem("token") || ""
         }
