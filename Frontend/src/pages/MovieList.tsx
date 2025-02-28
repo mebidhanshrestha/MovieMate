@@ -12,7 +12,8 @@ const MovieList = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
 
   useEffect(() => {
-    axios.get("http://localhost:3001/api/movie")
+    axios
+      .get("http://localhost:3001/api/movie")
       .then((response) => setMovies(response.data.movies))
       .catch((error) => console.error("Error fetching movies:", error));
   }, []);
@@ -22,7 +23,16 @@ const MovieList = () => {
       {movies.map((movie) => (
         <Link to={`/showtimes/${movie._id}`} key={movie._id}>
           <div className="border rounded-lg overflow-hidden shadow-lg">
-            <img src={movie.image} alt={movie.title} className="w-full h-60 object-cover" />
+            <img
+              src={`http://localhost:3001${movie.image}`}
+              alt={movie.title}
+              className="w-full h-auto aspect-[2/3] object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/api/placeholder/300/450";
+              }}
+            />
+
             <div className="p-4 text-center">
               <h2 className="text-xl font-bold">{movie.title}</h2>
             </div>

@@ -50,12 +50,6 @@ const Header = () => {
                   Movies
                 </a>
                 <a
-                  href="/menu"
-                  className={`text-gray-700 hover:text-primary py-2 text-base font-light transition-colors duration-200 ${location.pathname === '/menu' && 'text-primary'}`}
-                >
-                  Food & Beverages
-                </a>
-                <a
                   href="#"
                   className="text-gray-700 hover:text-primary py-2 text-base font-light transition-colors duration-200"
                 >

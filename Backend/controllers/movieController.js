@@ -64,15 +64,38 @@ const getMovies = async (req, res) => {
 };
 
 // Get showtimes for a specific movie
+// export const getShowtimes = async (req, res) => {
+//   try {
+//     const { movieId } = req.params;
+//     const rooms = await Room.find({ "showtimes.movie_id": movieId }, "name showtimes");
+//     res.status(200).json({ success: true, rooms });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// };
+
 export const getShowtimes = async (req, res) => {
   try {
     const { movieId } = req.params;
-    const rooms = await Room.find({ "showtimes.movie_id": movieId }, "name showtimes");
-    res.status(200).json({ success: true, rooms });
+
+    // Fetch rooms that have at least one showtime with the given movieId
+    const rooms = await Room.find(
+      { "showtimes.movie_id": movieId },
+      "name showtimes"
+    ).lean(); // Use .lean() for better performance
+
+    // Filter showtimes for the specific movie
+    const filteredRooms = rooms.map(room => ({
+      ...room,
+      showtimes: room.showtimes.filter(showtime => showtime.movie_id.toString() === movieId)
+    }));
+
+    res.status(200).json({ success: true, rooms: filteredRooms });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 // Get available seats for a specific showtime
 export const getAvailableSeats = async (req, res) => {

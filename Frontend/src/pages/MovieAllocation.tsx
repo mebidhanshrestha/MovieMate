@@ -24,6 +24,7 @@ const AdminPanel = () => {
   const [selectedMovie, setSelectedMovie] = useState<string>("");
   const [selectedRoom, setSelectedRoom] = useState<string>("");
   const [showtimes, setShowtimes] = useState<{ date: string; times: { start_time: string; end_time: string }[] }[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Fetch movies
   useEffect(() => {
@@ -65,7 +66,23 @@ const AdminPanel = () => {
       return;
     }
 
+    // Validate dates and times
+    for (const showtime of showtimes) {
+      if (!showtime.date) {
+        alert("Please select a date for all showtimes.");
+        return;
+      }
+      
+      for (const time of showtime.times) {
+        if (!time.start_time || !time.end_time) {
+          alert("Please set both start and end times for all time slots.");
+          return;
+        }
+      }
+    }
+
     try {
+      setIsLoading(true);
       const schedule = showtimes.map(showtime => ({
         date: showtime.date,
         time_slots: showtime.times
@@ -79,9 +96,14 @@ const AdminPanel = () => {
 
       alert("Movie allocated successfully!");
       console.log(response.data);
+      
+      // Refresh the page after successful allocation
+      window.location.reload();
+      
     } catch (error) {
       console.error("Error allocating movie:", error);
       alert("Failed to allocate movie.");
+      setIsLoading(false);
     }
   };
 
@@ -92,7 +114,12 @@ const AdminPanel = () => {
       {/* Movie Selection */}
       <div className="mb-4">
         <label className="block font-medium text-gray-700">Select Movie:</label>
-        <select className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" value={selectedMovie} onChange={(e) => setSelectedMovie(e.target.value)}>
+        <select 
+          className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" 
+          value={selectedMovie} 
+          onChange={(e) => setSelectedMovie(e.target.value)}
+          disabled={isLoading}
+        >
           <option value="">Select a movie</option>
           {movies.map((movie) => (
             <option key={movie._id} value={movie._id}>{movie.title}</option>
@@ -103,7 +130,12 @@ const AdminPanel = () => {
       {/* Room Selection */}
       <div className="mb-4">
         <label className="block font-medium text-gray-700">Select Room:</label>
-        <select className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)}>
+        <select 
+          className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" 
+          value={selectedRoom} 
+          onChange={(e) => setSelectedRoom(e.target.value)}
+          disabled={isLoading}
+        >
           <option value="">Select a room</option>
           {rooms.map((room) => (
             <option key={room._id} value={room._id}>{room.name}</option>
@@ -118,33 +150,69 @@ const AdminPanel = () => {
           <div key={dateIndex} className="mt-2 p-4 border border-gray-300 rounded-lg">
             <div className="flex items-center mb-2">
               <label className="block font-medium text-gray-700 mr-2">Date:</label>
-              <input type="date" value={showtime.date} onChange={(e) => {
-                const newShowtimes = [...showtimes];
-                newShowtimes[dateIndex].date = e.target.value;
-                setShowtimes(newShowtimes);
-              }} className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
-              <button className="ml-2 bg-primary text-white p-2 rounded-lg hover:bg-primary-100 transition-colors duration-200" onClick={() => addTimeSlot(dateIndex)}>+ Add Time</button>
+              <input 
+                type="date" 
+                value={showtime.date} 
+                onChange={(e) => {
+                  const newShowtimes = [...showtimes];
+                  newShowtimes[dateIndex].date = e.target.value;
+                  setShowtimes(newShowtimes);
+                }} 
+                className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled={isLoading} 
+              />
+              <button 
+                className="ml-2 bg-primary text-white p-2 rounded-lg hover:bg-primary-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
+                onClick={() => addTimeSlot(dateIndex)}
+                disabled={isLoading}
+              >
+                + Add Time
+              </button>
             </div>
 
             {showtime.times.map((time, timeIndex) => (
               <div key={timeIndex} className="mt-2 flex gap-4">
                 <div className="flex flex-col">
                   <label className="block font-medium text-gray-700">Start:</label>
-                  <input type="time" value={time.start_time} onChange={(e) => handleTimeChange(dateIndex, timeIndex, "start_time", e.target.value)} className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                  <input 
+                    type="time" 
+                    value={time.start_time} 
+                    onChange={(e) => handleTimeChange(dateIndex, timeIndex, "start_time", e.target.value)} 
+                    className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    disabled={isLoading}
+                  />
                 </div>
                 <div className="flex flex-col">
                   <label className="block font-medium text-gray-700">End:</label>
-                  <input type="time" value={time.end_time} onChange={(e) => handleTimeChange(dateIndex, timeIndex, "end_time", e.target.value)} className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                  <input 
+                    type="time" 
+                    value={time.end_time} 
+                    onChange={(e) => handleTimeChange(dateIndex, timeIndex, "end_time", e.target.value)} 
+                    className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    disabled={isLoading}
+                  />
                 </div>
               </div>
             ))}
           </div>
         ))}
-        <button className="mt-3 bg-primary text-white p-3 rounded-lg hover:bg-primary-100 transition-colors duration-200" onClick={() => addShowtime("")}>+ Add Date</button>
+        <button 
+          className="mt-3 bg-primary text-white p-3 rounded-lg hover:bg-primary-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
+          onClick={() => addShowtime("")}
+          disabled={isLoading}
+        >
+          + Add Date
+        </button>
       </div>
 
       {/* Allocate Movie Button */}
-      <button className="mt-3 bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-colors duration-200" onClick={allocateMovie}>Allocate Movie</button>
+      <button 
+        className="mt-3 bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
+        onClick={allocateMovie}
+        disabled={isLoading}
+      >
+        {isLoading ? "Allocating..." : "Allocate Movie"}
+      </button>
     </div>
   );
 };

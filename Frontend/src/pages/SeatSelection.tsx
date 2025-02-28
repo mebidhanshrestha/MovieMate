@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 type Seat = {
@@ -8,19 +8,34 @@ type Seat = {
 };
 
 const SeatSelection = () => {
-  const { showtimeId, roomId, movieId } = useParams<{ showtimeId: string, roomId: string, movieId: string}>();
+  const { showtimeId, roomId, movieId } = useParams<{ showtimeId: string; roomId: string; movieId: string }>();
   const [seats, setSeats] = useState<Seat[]>([]);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showLegend, setShowLegend] = useState(true);
   const navigate = useNavigate();
-
+  const location = useLocation();
+  const date = new URLSearchParams(location.search).get("date") || "";
 
   useEffect(() => {
-    axios.get(`http://localhost:3001/api/movie/showtimes/${showtimeId}/seats`)
-      .then((response) => setSeats(response.data.seats))
-      .catch((error) => console.error("Error fetching seats:", error));
+    setLoading(true);
+    axios
+      .get(`http://localhost:3001/api/movie/showtimes/${showtimeId}/seats`)
+      .then((response) => {
+        setSeats(response.data.seats);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching seats:", error);
+        setError("Unable to load seats. Please try again.");
+        setLoading(false);
+      });
   }, [showtimeId]);
 
-  const toggleSeatSelection = (seatNumber: string) => {
+  const toggleSeatSelection = (seatNumber: string, status: string) => {
+    if (status === "booked") return;
+    
     setSelectedSeats((prev) =>
       prev.includes(seatNumber)
         ? prev.filter((seat) => seat !== seatNumber)
@@ -28,30 +43,133 @@ const SeatSelection = () => {
     );
   };
 
+  // Group seats by row (assuming seat numbers like A1, A2, B1, B2, etc.)
+  const groupedSeats = seats.reduce((acc, seat) => {
+    const row = seat.seat_number.charAt(0);
+    if (!acc[row]) acc[row] = [];
+    acc[row].push(seat);
+    return acc;
+  }, {} as Record<string, Seat[]>);
+
+  // Sort rows alphabetically
+  const sortedRows = Object.keys(groupedSeats).sort();
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 text-center">
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Select Your Seats</h2>
-      <div className="grid grid-cols-5 gap-4">
-        {seats.map((seat) => (
-          <button
-            key={seat.seat_number}
-            className={`p-4 border rounded-lg text-center ${
-              seat.status === "booked" ? "bg-red-500 text-white" :
-              selectedSeats.includes(seat.seat_number) ? "bg-green-500 text-white" : "bg-gray-200"
-            }`}
-            disabled={seat.status === "booked"}
-            onClick={() => toggleSeatSelection(seat.seat_number)}
+    <div className="max-w-4xl my-3 mx-auto p-6 bg-white rounded-lg border">
+      <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Select Your Seats</h2>
+      
+      {/* Info and Legend */}
+      {showLegend && (
+        <div className="mb-8 bg-gray-50 p-4 rounded-lg relative">
+          <button 
+            className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+            onClick={() => setShowLegend(false)}
           >
-            {seat.seat_number}
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
           </button>
+          <div className="flex flex-wrap justify-center gap-8">
+            <div className="flex items-center">
+              <div className="w-6 h-6 rounded mr-2 bg-white border-2 border-gray-300"></div>
+              <span className="text-sm">Available</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-6 h-6 rounded mr-2 bg-red-500"></div>
+              <span className="text-sm">Booked</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-6 h-6 rounded mr-2" style={{ backgroundColor: "#FBC700" }}></div>
+              <span className="text-sm">Selected</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Screen */}
+      <div className="mb-12 relative">
+        <div className="h-6 bg-gray-300 rounded-t-3xl mx-auto w-3/4 opacity-70"></div>
+        <div className="text-center text-sm text-gray-500 mt-2">SCREEN</div>
+        <div className="w-full h-12 bg-gradient-to-b from-gray-200 to-transparent absolute -bottom-12"></div>
+      </div>
+
+      {/* Seat Layout */}
+      <div className="mb-12">
+        {sortedRows.map((row) => (
+          <div key={row} className="flex justify-center mb-2">
+            <div className="w-8 h-8 flex items-center justify-center font-bold text-gray-600">{row}</div>
+            <div className="flex gap-2 flex-wrap justify-center">
+              {groupedSeats[row].map((seat) => (
+                <button
+                  key={seat.seat_number}
+                  className={`w-10 h-10 rounded flex items-center justify-center transition-all ${
+                    seat.status === "booked"
+                      ? "bg-red-500 text-white cursor-not-allowed"
+                      : selectedSeats.includes(seat.seat_number)
+                      ? "text-gray-800 transform scale-105 shadow-md"
+                      : "bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700"
+                  }`}
+                  style={{
+                    backgroundColor: selectedSeats.includes(seat.seat_number) ? "#FBC700" : undefined
+                  }}
+                  disabled={seat.status === "booked"}
+                  onClick={() => toggleSeatSelection(seat.seat_number, seat.status)}
+                >
+                  {seat.seat_number.substring(1)}
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
-      <button
-        className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg"
-        onClick={() => navigate("/menu", { state: { selectedSeats, showtimeId, roomId, movieId } })}
-      >
-        Next: Select Menu
-      </button>
+
+      {/* Summary and Next Button */}
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="font-semibold">Selected Seats ({selectedSeats.length})</h3>
+            <p className="text-gray-600">
+              {selectedSeats.length > 0 
+                ? selectedSeats.sort().join(", ") 
+                : "No seats selected"}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-600">Ticket price</p>
+            <p className="font-bold">${(3 * selectedSeats.length).toFixed(2)}</p>
+          </div>
+        </div>
+        
+        <button
+          className="w-full py-3 rounded-lg font-bold text-gray-800 transition-all relative overflow-hidden disabled:opacity-50"
+          style={{ 
+            backgroundColor: "#FBC700",
+            boxShadow: selectedSeats.length > 0 ? "0 4px 12px rgba(251, 199, 0, 0.3)" : "none"
+          }}
+          disabled={selectedSeats.length === 0}
+          onClick={() => navigate("/menu", { state: { selectedSeats, showtimeId, roomId, movieId } })}
+        >
+          {selectedSeats.length === 0 ? "Please select seats" : "Next: Food & Drinks"}
+        </button>
+      </div>
     </div>
   );
 };

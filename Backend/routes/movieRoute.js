@@ -9,7 +9,7 @@ router.get("/", getMovies)
 // router.get("/movies", getMovies);
 
 // Get showtimes for a specific movie
-router.get("/:movieId/showtimes", getShowtimes);
+router.get("/:movieId/showtimess", getShowtimes);
 
 // Get available seats for a specific showtime
 router.get("/showtimes/:showtimeId/seats", getAvailableSeats);
