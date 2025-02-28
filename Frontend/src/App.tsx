@@ -1,35 +1,52 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import AuthLayout from "./components/AuthLayout";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Home from "./pages/Home";
+import Movies from "./pages/Movies";
+import MainLayout from "./components/MainLayout";
+import DashboardLayout from "./components/DashboardLayout";
+import AdminMenu from "./pages/AdminMenu";
+import PrivateRoute from "./routes/PrivateRoutes";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  role: string;
 }
 
-export default App
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
+  const userRole = localStorage.getItem("role");
+  return userRole === role ? children : <Navigate to="/login" />;
+};
+
+const App: React.FC = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route element={<AuthLayout />}>
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+        </Route>
+
+        {/* Normal user home */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/movies" element={<Movies />} />
+        </Route>
+
+        <Route element={<PrivateRoute />}>
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route path="menu" element={<AdminMenu />} />
+          </Route>
+        </Route>
+      </Routes>
+    </Router>
+  );
+};
+
+export default App;
