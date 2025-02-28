@@ -1,7 +1,22 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
+
+const seatSchema = new mongoose.Schema({
+  seat_number: { type: String, required: true },
+  status: { type: String, enum: ["available", "booked"], default: "available" },
+});
+
+const showtimeSchema = new mongoose.Schema({
+  movie_id: { type: mongoose.Schema.Types.ObjectId, ref: "Movie", required: true },
+  date: { type: Date, required: true },
+  start_time: { type: String, required: true },
+  end_time: { type: String, required: true },
+  seats: [seatSchema], // Array of seats for this showtime
+});
 
 const roomSchema = new mongoose.Schema({
-  name: String,
-  total_seats: { type: Number, default: 50 }
-});
-module.exports = mongoose.model('Room', roomSchema);
+  name: { type: String, required: true, unique: true },
+  total_seats: { type: Number, default: 50 },
+  showtimes: [showtimeSchema], // Array of showtimes for this room
+}, { timestamps: true });
+
+export default mongoose.model("Room", roomSchema);

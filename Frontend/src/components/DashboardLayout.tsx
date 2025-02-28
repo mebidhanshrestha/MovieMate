@@ -20,6 +20,16 @@ const DashboardLayout: React.FC = (): JSX.Element => {
                 Manage Menu
               </Link>
             </li>
+            <li className="mb-2">
+              <Link to="/dashboard/movie" className="block p-2 rounded hover:bg-gray-700">
+                Movie
+              </Link>
+            </li>
+            <li className="mb-2">
+              <Link to="/dashboard/movie-allocate" className="block p-2 rounded hover:bg-gray-700">
+                Movie Allocate
+              </Link>
+            </li>
             <li className="mt-6">
               <button 
                 onClick={handleLogout} 
