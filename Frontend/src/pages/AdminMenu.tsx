@@ -81,51 +81,60 @@ const AdminMenu = () => {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Manage Menu</h2>
+    <div className="max-w-4xl mx-auto p-8 bg-white shadow-lg rounded-lg">
+      <h2 className="text-3xl font-bold mb-6 text-primary">Manage Menu</h2>
 
       {/* Add New Menu Item */}
-      <div className="mb-6 p-4 bg-white shadow rounded">
-        <h3 className="text-lg font-bold mb-2">Add New Item</h3>
-        <input
-          type="text"
-          name="name"
-          placeholder="Name"
-          value={newItem.name}
-          onChange={handleInputChange}
-          className="w-full p-2 border rounded mb-2"
-        />
-        <input
-          type="number"
-          name="price"
-          placeholder="Price"
-          value={newItem.price}
-          onChange={handleInputChange}
-          className="w-full p-2 border rounded mb-2"
-        />
-        <input
-          type="file"
-          name="image"
-          accept="image/*"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="w-full p-2 border rounded mb-2"
-        />
-        <button onClick={handleAddItem} className="bg-green-500 text-white px-4 py-2 rounded">
-          Add Item
-        </button>
+      <div className="mb-6 p-6 bg-gray-100 shadow rounded-lg">
+        <h3 className="text-lg font-bold mb-4">Add New Item</h3>
+        <form onSubmit={handleAddItem} className="space-y-4">
+          <div>
+            <label className="block font-medium text-gray-700">Name:</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Name"
+              value={newItem.name}
+              onChange={handleInputChange}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label className="block font-medium text-gray-700">Price:</label>
+            <input
+              type="number"
+              name="price"
+              placeholder="Price"
+              value={newItem.price}
+              onChange={handleInputChange}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label className="block font-medium text-gray-700">Image:</label>
+            <input
+              type="file"
+              name="image"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <button type="submit" className="w-full bg-primary text-white p-3 rounded-lg hover:bg-primary-100 transition-colors duration-200">
+            Add Item
+          </button>
+        </form>
       </div>
 
       {/* List of Menu Items */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {menuItems.map((item) => (
-          <div key={item._id} className="bg-white shadow-md p-4 rounded">
-            <img src={`http://localhost:3001${item.image}`} alt={item.name} className="w-full h-32 object-cover rounded mb-2" />
-            <h3 className="text-lg font-bold">{item.name}</h3>
-            <p className="text-green-600 font-bold">Rs. {item.price}</p>
-
-            {/* Delete Button */}
-            <button onClick={() => handleDelete(item._id)} className="mt-2 bg-red-500 text-white px-3 py-1 rounded ml-2">
+          <div key={item._id} className="bg-white shadow-md p-4 rounded-lg">
+            <img src={`http://localhost:3001${item.image}`} alt={item.name} className="w-full h-32 object-cover rounded mb-4" />
+            <h3 className="text-lg font-bold mb-2">{item.name}</h3>
+            <p className="text-green-600 font-bold mb-4">Rs. {item.price}</p>
+            <button onClick={() => handleDelete(item._id)} className="w-full bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors duration-200">
               Delete
             </button>
           </div>

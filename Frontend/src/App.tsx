@@ -36,29 +36,47 @@ const App: React.FC = () => {
         </Route>
 
         {/* Normal user home */}
-       
+
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/movies" element={<Movies />} />
         </Route>
-       
+
         <Route element={<PrivateRoute />}>
-        
-          <Route path="/dashboard" element={<ProtectedRoute role="admin">
-            <DashboardLayout />
-          </ProtectedRoute>}>
-            <Route path="menu" element={<ProtectedRoute role="admin" >
-              <AdminMenu />
-            </ProtectedRoute>} />
-            <Route path="movie" element={<ProtectedRoute role="admin">
-              <Movie />
-            </ProtectedRoute>} />
-            <Route path='movie-allocate' element={<ProtectedRoute role="admin">
-              <MovieAllocation />
-            </ProtectedRoute>} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute role="admin">
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route
+              path="menu"
+              element={
+                <ProtectedRoute role="admin">
+                  <AdminMenu />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="movie"
+              element={
+                <ProtectedRoute role="admin">
+                  <Movie />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="movie-allocate"
+              element={
+                <ProtectedRoute role="admin">
+                  <MovieAllocation />
+                </ProtectedRoute>
+              }
+            />
           </Route>
         </Route>
-       
       </Routes>
     </Router>
   );

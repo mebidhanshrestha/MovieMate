@@ -277,12 +277,14 @@ export default function Home(): JSX.Element {
           <button
             onClick={() => scroll(movieScrollRef, "left")}
             className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow-md hover:bg-white transition-colors z-10"
+            aria-label="Scroll movies left"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <button
             onClick={() => scroll(movieScrollRef, "right")}
             className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow-md hover:bg-white transition-colors z-10"
+            aria-label="Scroll movies right"
           >
             <ChevronRight className="w-6 h-6" />
           </button>
@@ -310,6 +312,7 @@ export default function Home(): JSX.Element {
                     alt={item.name}
                     width={202}
                     height={224}
+                    onError={(e) => (e.currentTarget.src = 'path/to/placeholder/image.jpg')}
                   />
                 </div>
                 <h3 className="font-medium text-lg mb-1">{item.name}</h3>
@@ -329,12 +332,14 @@ export default function Home(): JSX.Element {
           <button
             onClick={() => scroll(foodScrollRef, "left")}
             className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow-md hover:bg-white transition-colors z-10"
+            aria-label="Scroll food items left"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <button
             onClick={() => scroll(foodScrollRef, "right")}
             className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow-md hover:bg-white transition-colors z-10"
+            aria-label="Scroll food items right"
           >
             <ChevronRight className="w-6 h-6" />
           </button>

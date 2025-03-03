@@ -33,7 +33,6 @@ const AdminPanel = () => {
       })
       .catch((error) => console.error("Error fetching movies:", error));
   }, []);
-  
 
   const addShowtime = (date: string) => {
     setShowtimes([...showtimes, { date, times: [] }]);
@@ -65,48 +64,61 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="p-5">
-      <h2 className="text-xl font-bold">Allocate Movie to Room</h2>
+    <div className="max-w-4xl mx-auto p-8 bg-white shadow-lg rounded-lg">
+      <h2 className="text-3xl font-bold mb-6 text-primary">Allocate Movie to Room</h2>
 
-      <label className="block mt-3">Select Movie:</label>
-      <select className="border p-2" value={selectedMovie} onChange={(e) => setSelectedMovie(e.target.value)}>
-        <option value="">Select a movie</option>
-        {movies.map((movie) => (
-          <option key={movie._id} value={movie._id}>{movie.title}</option>
-        ))}
-      </select>
-
-      <label className="block mt-3">Select Room:</label>
-      {/* <select className="border p-2" value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)}>
-        <option value="">Select a room</option>
-        {rooms.map((room) => (
-          <option key={room._id} value={room._id}>{room.name}</option>
-        ))}
-      </select> */}
-
-      <label className="block mt-3">Showtimes:</label>
-      {showtimes.map((showtime, dateIndex) => (
-        <div key={dateIndex} className="mt-2 p-2 border">
-          <label>Date:</label>
-          <input type="date" value={showtime.date} onChange={(e) => {
-            const newShowtimes = [...showtimes];
-            newShowtimes[dateIndex].date = e.target.value;
-            setShowtimes(newShowtimes);
-          }} className="border p-1" />
-          <button className="ml-2 bg-blue-500 text-white p-1" onClick={() => addTimeSlot(dateIndex)}>+ Add Time</button>
-
-          {showtime.times.map((time, timeIndex) => (
-            <div key={timeIndex} className="mt-1 flex gap-2">
-              <label>Start:</label>
-              <input type="time" value={time.start} onChange={(e) => handleTimeChange(dateIndex, timeIndex, "start", e.target.value)} className="border p-1" />
-              <label>End:</label>
-              <input type="time" value={time.end} onChange={(e) => handleTimeChange(dateIndex, timeIndex, "end", e.target.value)} className="border p-1" />
-            </div>
+      <div className="mb-4">
+        <label className="block font-medium text-gray-700">Select Movie:</label>
+        <select className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" value={selectedMovie} onChange={(e) => setSelectedMovie(e.target.value)}>
+          <option value="">Select a movie</option>
+          {movies.map((movie) => (
+            <option key={movie._id} value={movie._id}>{movie.title}</option>
           ))}
-        </div>
-      ))}
-      <button className="mt-3 bg-green-500 text-white p-2" onClick={() => addShowtime("")}>+ Add Date</button>
-      <button className="mt-3 bg-blue-500 text-white p-2" onClick={allocateMovie}>Allocate Movie</button>
+        </select>
+      </div>
+
+      <div className="mb-4">
+        <label className="block font-medium text-gray-700">Select Room:</label>
+        <select className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)}>
+          <option value="">Select a room</option>
+          {rooms.map((room) => (
+            <option key={room._id} value={room._id}>{room.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mb-4">
+        <label className="block font-medium text-gray-700">Showtimes:</label>
+        {showtimes.map((showtime, dateIndex) => (
+          <div key={dateIndex} className="mt-2 p-4 border border-gray-300 rounded-lg">
+            <div className="flex items-center mb-2">
+              <label className="block font-medium text-gray-700 mr-2">Date:</label>
+              <input type="date" value={showtime.date} onChange={(e) => {
+                const newShowtimes = [...showtimes];
+                newShowtimes[dateIndex].date = e.target.value;
+                setShowtimes(newShowtimes);
+              }} className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+              <button className="ml-2 bg-primary text-white p-2 rounded-lg hover:bg-primary-100 transition-colors duration-200" onClick={() => addTimeSlot(dateIndex)}>+ Add Time</button>
+            </div>
+
+            {showtime.times.map((time, timeIndex) => (
+              <div key={timeIndex} className="mt-2 flex gap-4">
+                <div className="flex flex-col">
+                  <label className="block font-medium text-gray-700">Start:</label>
+                  <input type="time" value={time.start} onChange={(e) => handleTimeChange(dateIndex, timeIndex, "start", e.target.value)} className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div className="flex flex-col">
+                  <label className="block font-medium text-gray-700">End:</label>
+                  <input type="time" value={time.end} onChange={(e) => handleTimeChange(dateIndex, timeIndex, "end", e.target.value)} className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+        <button className="mt-3 bg-primary text-white p-3 rounded-lg hover:bg-primary-100 transition-colors duration-200" onClick={() => addShowtime("")}>+ Add Date</button>
+      </div>
+
+      <button className="mt-3 bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-colors duration-200" onClick={allocateMovie}>Allocate Movie</button>
     </div>
   );
 };

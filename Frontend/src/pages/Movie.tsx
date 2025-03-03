@@ -59,57 +59,57 @@ const AddMovie = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-5 bg-white shadow-lg rounded-lg">
-      <h2 className="text-xl font-bold mb-4">Add Movie</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="max-w-lg mx-auto p-8 bg-white shadow-lg rounded-lg">
+      <h2 className="text-2xl font-bold mb-6 text-primary">Add Movie</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block font-medium">Title:</label>
-          <input type="text" name="title" value={movie.title} onChange={handleChange} required className="w-full border p-2 rounded" />
+          <label className="block font-medium text-gray-700">Title:</label>
+          <input type="text" name="title" value={movie.title} onChange={handleChange} required className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
         </div>
 
         <div>
-          <label className="block font-medium">Description:</label>
-          <textarea name="description" value={movie.description} onChange={handleChange} required className="w-full border p-2 rounded" />
+          <label className="block font-medium text-gray-700">Description:</label>
+          <textarea name="description" value={movie.description} onChange={handleChange} required className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
         </div>
 
         <div>
-          <label className="block font-medium">Duration (minutes):</label>
-          <input type="number" name="duration" value={movie.duration} onChange={handleChange} required className="w-full border p-2 rounded" />
+          <label className="block font-medium text-gray-700">Duration (minutes):</label>
+          <input type="number" name="duration" value={movie.duration} onChange={handleChange} required className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
         </div>
 
         <div className="flex gap-4">
-          <div>
-            <label className="block font-medium">Start Date:</label>
-            <input type="date" name="start_date" value={movie.start_date} onChange={handleChange} required className="w-full border p-2 rounded" />
+          <div className="w-1/2">
+            <label className="block font-medium text-gray-700">Start Date:</label>
+            <input type="date" name="start_date" value={movie.start_date} onChange={handleChange} required className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
-          <div>
-            <label className="block font-medium">End Date:</label>
-            <input type="date" name="end_date" value={movie.end_date} onChange={handleChange} required className="w-full border p-2 rounded" />
+          <div className="w-1/2">
+            <label className="block font-medium text-gray-700">End Date:</label>
+            <input type="date" name="end_date" value={movie.end_date} onChange={handleChange} required className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
         </div>
 
         <div>
-          <label className="block font-medium">Status:</label>
-          <select name="status" value={movie.status} onChange={handleChange} className="w-full border p-2 rounded">
+          <label className="block font-medium text-gray-700">Status:</label>
+          <select name="status" value={movie.status} onChange={handleChange} className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
             <option value="hosting">Hosting</option>
             <option value="expired">Expired</option>
           </select>
         </div>
 
         <div>
-          <label className="block font-medium">Type:</label>
-          <select name="type" value={movie.type} onChange={handleChange} className="w-full border p-2 rounded">
+          <label className="block font-medium text-gray-700">Type:</label>
+          <select name="type" value={movie.type} onChange={handleChange} className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
             <option value="current">Current</option>
             <option value="upcoming">Upcoming</option>
           </select>
         </div>
 
         <div>
-          <label className="block font-medium">Movie Image:</label>
-          <input type="file" accept="image/*" onChange={handleFileChange} className="w-full border p-2 rounded" />
+          <label className="block font-medium text-gray-700">Movie Image:</label>
+          <input type="file" accept="image/*" onChange={handleFileChange} className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
         </div>
 
-        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Add Movie</button>
+        <button type="submit" className="w-full bg-primary text-white p-3 rounded-lg hover:bg-primary-100 transition-colors duration-200">Add Movie</button>
       </form>
     </div>
   );
