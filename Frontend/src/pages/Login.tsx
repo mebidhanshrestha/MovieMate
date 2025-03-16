@@ -12,6 +12,7 @@ interface FormData {
 interface LoginResponse {
   token: string;
   role: string;
+  id: string;
 }
 
 const Login = (): JSX.Element => {
@@ -33,6 +34,7 @@ const Login = (): JSX.Element => {
       );
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
+      localStorage.setItem("id", res.data.id);
 
       if (res.data.role === "admin") {
         navigate("/dashboard");

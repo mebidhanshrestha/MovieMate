@@ -6,7 +6,7 @@ mongoose.connect("mongodb://localhost:27017/moviemate");
 const createRoom = async () => {
   try {
     const room = new Room({
-      name: "Room A",
+      name: "Room B",
       total_seats: 50,
     });
 

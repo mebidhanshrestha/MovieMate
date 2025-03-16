@@ -16,6 +16,11 @@ import PrivateRoute from "./routes/PrivateRoutes";
 import Movie from "./pages/AdminMovie";
 import MovieAllocation from "./pages/MovieAllocation";
 import Menu from "./pages/Menu";
+import MovieList from "./pages/MovieList";
+import ShowtimeSelection from "./pages/ShowtimeSelection";
+import SeatSelection from "./pages/SeatSelection";
+import MenuSelection from "./pages/MenuSelection";
+import BookingConfirmation from "./pages/BookingConfirmation";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -40,8 +45,15 @@ const App: React.FC = () => {
 
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/movies" element={<Movies />} />
-          <Route path="/menu" element={<Menu />} />
+          {/* <Route path="/menu" element={<Menu />} /> */}
+          <Route path="/movies" element={<MovieList />} />
+          <Route path="/showtimes/:movieId" element={<ShowtimeSelection />} />
+          <Route
+            path="/seats/:showtimeId/:movieId/:roomId"
+            element={<SeatSelection />}
+          />
+          <Route path="/menu" element={<MenuSelection />} />
+          <Route path="/confirmation" element={<BookingConfirmation />} />
         </Route>
 
         <Route element={<PrivateRoute />}>

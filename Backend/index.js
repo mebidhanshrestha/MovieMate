@@ -6,6 +6,7 @@ const userRoutes = require('./routes/userRoute')
 const movieRoute = require('./routes/movieRoute');
 
 const roomRoute = require('./routes/roomRoute');
+const menuRoutes = require('./routes/menuRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -22,7 +23,7 @@ app.use(express.urlencoded({ extended: true })); // For URL-encoded data
 
 app.use('/api/users', userRoutes);
 
-const menuRoutes = require('./routes/menuRoutes');
+
 app.use('/api/menu', menuRoutes);
 
 app.use('/uploads', express.static('uploads'));
@@ -30,7 +31,7 @@ app.use('/uploads', express.static('uploads'));
 app.use("/api/movie", movieRoute);
 
 app.use("/api/room", roomRoute);
-
+app.use("/api/bookings", movieRoute);
 
 // Routes placeholder
 app.get('/', (req, res) => {

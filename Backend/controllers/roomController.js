@@ -80,3 +80,13 @@ export const getRoomShowtimes = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const getRooms = async (req, res) => {
+  try {
+    const rooms = await Room.find(); // Fetch all rooms
+    res.status(200).json({ success: true, rooms });
+  } catch (error) {
+    console.error("Error fetching rooms:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
