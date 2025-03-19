@@ -28,18 +28,41 @@ const Login = (): JSX.Element => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     try {
-      const res = await axios.post<LoginResponse>(
+      // First login to get token
+      const loginRes = await axios.post<LoginResponse>(
         "http://localhost:3001/api/users/login",
         formData
       );
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.role);
-      localStorage.setItem("id", res.data.id);
+      
+      // Store auth data
+      localStorage.setItem("token", loginRes.data.token);
+      localStorage.setItem("role", loginRes.data.role);
+      localStorage.setItem("id", loginRes.data.id);
 
-      if (res.data.role === "admin") {
-        navigate("/dashboard");
+      // After successful login, fetch user details to get name and email
+      try {
+        const userRes = await axios.get(`http://localhost:3001/api/users/${loginRes.data.id}`, {
+          headers: {
+            Authorization: loginRes.data.token
+          }
+        });
+        
+        // Store additional user data
+        if (userRes.data) {
+          localStorage.setItem("userName", userRes.data.name || "User");
+          localStorage.setItem("userEmail", userRes.data.email || "");
+          console.log("User data stored:", userRes.data);
+        }
+      } catch (userError) {
+        console.error("Error fetching user details:", userError);
+        // Continue anyway, as we have the essential auth data
+      }
+
+      // Navigate based on role
+      if (loginRes.data.role === "admin") {
+        window.location.href = "/dashboard"; // More reliable navigation
       } else {
-        navigate("/");
+        window.location.href = "/"; // More reliable navigation
       }
     } catch (err) {
       const axiosError = err as AxiosError<{ message: string }>;
