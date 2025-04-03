@@ -196,12 +196,24 @@ const getAvailableSeats = async (req, res) => {
   }
 };
 
-// Book seats
+// Book seats for a movie
 const bookSeats = async (req, res) => {
   try {
-    const { user_id, movie_id, room_id, date, time_slot, seats } = req.body;
+    const { 
+      user_id, 
+      movie_id, 
+      room_id, 
+      date = new Date(), // Default to current date if not provided
+      time_slot, 
+      seats, 
+      menu_items = [], 
+      payment_method = 'card', 
+      total_price 
+    } = req.body;
 
-    // Check if seats are available
+    // Ensure date is a valid Date object
+    const bookingDate = date instanceof Date ? date : new Date(date);
+
     const room = await Room.findOne({ _id: room_id, "showtimes._id": time_slot });
     if (!room) return res.status(404).json({ success: false, message: "Room or Showtime not found" });
 
@@ -209,19 +221,39 @@ const bookSeats = async (req, res) => {
     const unavailableSeats = showtime.seats.filter(s => seats.includes(s.seat_number) && s.status === "booked");
     if (unavailableSeats.length > 0) return res.status(400).json({ success: false, message: "Some seats are already booked" });
 
-    // Update seat status to booked
     showtime.seats.forEach(seat => {
       if (seats.includes(seat.seat_number)) seat.status = "booked";
     });
     await room.save();
 
-    // Create booking entry
-    const booking = new Booking({ user_id, movie_id, room_id, date, time_slot, seats, status: "confirmed" });
+    // Prepare menu items with proper references
+    const preparedMenuItems = menu_items.map(item => ({
+      menu_id: item.menu_id || item.id, // Handle different possible input formats
+      quantity: item.quantity
+    }));
+
+    const booking = new Booking({ 
+      user_id, 
+      movie_id, 
+      room_id, 
+      date: bookingDate, 
+      time_slot, 
+      seats, 
+      menu_items: preparedMenuItems,
+      payment_method,
+      total_price,
+      status: "confirmed" 
+    });
     await booking.save();
 
-    res.status(201).json({ success: true, message: "Booking confirmed" });
+    res.status(201).json({ 
+      success: true, 
+      message: "Booking confirmed", 
+      bookingId: booking._id 
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Booking error:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 

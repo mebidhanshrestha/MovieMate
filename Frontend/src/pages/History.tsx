@@ -28,7 +28,7 @@ interface SalesRecord {
     type: string;
   };
   menu_items: MenuItemPurchase[];
-  date: string;
+  date: string | null | undefined; // Allow null or undefined
   time: string;
   payment_method: string;
   total_amount: number;
@@ -104,7 +104,6 @@ const History: React.FC = () => {
       try {
         setLoading(true);
 
-        // Debug information
         console.log("User ID:", userId);
         console.log("Token exists:", !!token);
 
@@ -114,7 +113,6 @@ const History: React.FC = () => {
           return;
         }
 
-        // Using the JWT token from localStorage - adding Bearer if not present
         const authToken = token.startsWith("Bearer ")
           ? token
           : `Bearer ${token}`;
@@ -132,9 +130,21 @@ const History: React.FC = () => {
           }
         );
 
-        console.log("API Response:", response.data);
+        console.log("API Response data:", response.data.history);
 
         if (response.data.success) {
+          // Log any records with null dates
+          response.data.history.movieTickets.forEach((sale: SalesRecord) => {
+            if (!sale.date) {
+              console.warn("Found null date in movie ticket:", sale);
+            }
+          });
+          response.data.history.concessions.forEach((sale: SalesRecord) => {
+            if (!sale.date) {
+              console.warn("Found null date in concession:", sale);
+            }
+          });
+
           setHistory(response.data.history);
         } else {
           setError(
@@ -144,12 +154,9 @@ const History: React.FC = () => {
         }
       } catch (err: any) {
         console.error("Error fetching history:", err);
-
         if (err.response) {
           console.error("Error response:", err.response.data);
           console.error("Status code:", err.response.status);
-
-          // If unauthorized, try to refresh token or redirect to login
           if (err.response.status === 401) {
             console.log("Authentication failed, redirecting to login");
             setError("Your session has expired. Please log in again.");
@@ -213,15 +220,17 @@ const History: React.FC = () => {
 
   // Format date for display
   // Replace your current formatDate function with this improved version
-  const formatDate = (dateStr: string): string => {
+  const formatDate = (dateStr: string | null | undefined): string => {
+    // If dateStr is null or undefined, return a fallback
+    if (!dateStr || dateStr === "null" || dateStr === "undefined") {
+      console.warn("Date is null or undefined, using fallback");
+      return "Recent purchase";
+    }
+
     try {
       // Skip processing invalid dates or unix epoch (which would show as Jan 1, 1970)
-      if (
-        !dateStr ||
-        dateStr === "1970-01-01" ||
-        new Date(dateStr).getFullYear() <= 1970
-      ) {
-        console.log("Invalid date detected:", dateStr);
+      if (dateStr === "1970-01-01" || new Date(dateStr).getFullYear() <= 1970) {
+        console.log("Invalid date detected (epoch):", dateStr);
         return "Recent purchase";
       }
 

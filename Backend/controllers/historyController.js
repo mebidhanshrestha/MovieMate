@@ -2,81 +2,115 @@ const Booking = require('../models/Booking');
 const Movie = require('../models/Movie');
 const Menu = require('../models/Menu');
 
-// Get user's complete purchase history
 const getUserHistory = async (req, res) => {
   try {
     const { userId } = req.params;
-    
-    // Fetch all booking records for the user
+
     const bookings = await Booking.find({ user_id: userId })
       .populate('movie_id', 'title description duration image type')
-      .populate('menu_items.menu_id', 'name price image') // Populate menu items
+      .populate({
+        path: 'menu_items.menu_id', 
+        select: 'name price image', 
+        model: 'Menu'
+      })
       .sort({ date: -1 })
       .lean();
-    
-    console.log('Found bookings:', bookings);
-    
-    // Transform bookings for movie tickets view
-    const movieTickets = bookings.map(booking => ({
-      _id: booking._id,
-      user_id: booking.user_id,
-      username: '',
-      movie_id: booking.movie_id,
-      menu_items: booking.menu_items || [],
-      date: booking.date,
-      time: booking.time_slot || '',
-      payment_method: booking.payment_method || 'card',
-      total_amount: booking.total_price || 0
-    }));
-    
-    // Find bookings with menu items for concessions view
-    const concessionsBookings = bookings.filter(booking => 
-      booking.menu_items && booking.menu_items.length > 0
-    );
-    
-    console.log('Bookings with concessions:', concessionsBookings);
-    
-    // Format concessions
-    const concessions = concessionsBookings.map(booking => ({
-      _id: booking._id,
-      user_id: booking.user_id,
-      username: '',
-      movie_id: booking.movie_id, // Keep movie reference if available
-      menu_items: booking.menu_items,
-      date: booking.date,
-      time: booking.time_slot || '',
-      payment_method: booking.payment_method || 'card',
-      total_amount: booking.total_price || 0
-    }));
-    
-    // Structure the response
+
+    console.log('Raw Fetched Bookings:', JSON.stringify(bookings, null, 2));
+
+    // Defensive handling of bookings and menu items
+    const processedBookings = bookings.map(booking => {
+      // Ensure menu_items is an array, even if undefined
+      const safeMenuItems = Array.isArray(booking.menu_items) 
+        ? booking.menu_items 
+        : [];
+
+      // Process menu items with fallback values
+      const processedMenuItems = safeMenuItems.map(item => {
+        // Ensure menu_id exists and has properties
+        const menuId = item.menu_id || {};
+        return {
+          menu_id: {
+            _id: menuId._id || 'unknown',
+            name: menuId.name || 'Unknown Item',
+            price: menuId.price || 0,
+            image: menuId.image || '/placeholder-food.jpg'
+          },
+          quantity: item.quantity || 0
+        };
+      });
+
+      return {
+        ...booking,
+        date: booking.date || new Date(), // Fallback to current date if null
+        menu_items: processedMenuItems
+      };
+    });
+
+    // Separate movie tickets and concessions with additional safety checks
+    const movieTickets = processedBookings
+      .filter(booking => booking.movie_id)
+      .map(booking => ({
+        _id: booking._id,
+        user_id: booking.user_id,
+        movie_id: booking.movie_id,
+        menu_items: booking.menu_items || [],
+        date: booking.date,
+        time: booking.time_slot || '',
+        payment_method: booking.payment_method || 'card',
+        total_amount: booking.total_price || 0
+      }));
+
+    const concessions = processedBookings
+      .filter(booking => 
+        booking.menu_items && booking.menu_items.length > 0
+      )
+      .map(booking => ({
+        _id: booking._id,
+        user_id: booking.user_id,
+        movie_id: booking.movie_id,
+        menu_items: booking.menu_items,
+        date: booking.date,
+        time: booking.time_slot || '',
+        payment_method: booking.payment_method || 'card',
+        total_amount: booking.total_price || 0
+      }));
+
+    console.log('Processed Movie Tickets:', JSON.stringify(movieTickets, null, 2));
+    console.log('Processed Concessions:', JSON.stringify(concessions, null, 2));
+
     const history = {
       movieTickets,
       concessions
     };
-    
+
     res.status(200).json({
       success: true,
       history
     });
-    
+
   } catch (error) {
-    console.error('Error fetching user history:', error);
+    console.error('Detailed Error in getUserHistory:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Server error', 
-      error: error.message 
+      error: error.toString() 
     });
   }
 };
 
-// Get detailed information for a specific booking
+// Update getSalesDetails to match the same population logic
 const getSalesDetails = async (req, res) => {
   try {
     const { salesId } = req.params;
     
     const booking = await Booking.findById(salesId)
       .populate('movie_id')
+      .populate({
+        path: 'menu_items.menu_id', 
+        select: 'name price image', 
+        model: 'Menu'
+      })
       .lean();
     
     if (!booking) {
@@ -87,13 +121,20 @@ const getSalesDetails = async (req, res) => {
     }
     
     // Format booking to match expected sale format
-    // Include menu items if they exist in the booking
     const sale = {
       _id: booking._id,
       user_id: booking.user_id,
       username: '',
       movie_id: booking.movie_id,
-      menu_items: booking.menu_items || [],
+      menu_items: (booking.menu_items || []).map(item => ({
+        menu_id: {
+          _id: item.menu_id?._id || 'unknown',
+          name: item.menu_id?.name || 'Unknown Item',
+          price: item.menu_id?.price || 0,
+          image: item.menu_id?.image || '/placeholder-food.jpg'
+        },
+        quantity: item.quantity || 0
+      })),
       date: booking.date,
       time: booking.time_slot || '',
       payment_method: booking.payment_method || 'card',
