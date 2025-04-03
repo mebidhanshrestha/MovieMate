@@ -4,9 +4,9 @@ const connectDB = require('./config/db');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoute')
 const movieRoute = require('./routes/movieRoute');
-
 const roomRoute = require('./routes/roomRoute');
 const menuRoutes = require('./routes/menuRoutes');
+const historyRoutes = require('./routes/historyRoute'); // Add this line
 
 // Load environment variables
 dotenv.config();
@@ -22,16 +22,12 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true })); // For URL-encoded data
 
 app.use('/api/users', userRoutes);
-
-
 app.use('/api/menu', menuRoutes);
-
 app.use('/uploads', express.static('uploads'));
-
 app.use("/api/movie", movieRoute);
-
 app.use("/api/room", roomRoute);
 app.use("/api/bookings", movieRoute);
+app.use("/api/history", historyRoutes); // Add this line
 
 // Routes placeholder
 app.get('/', (req, res) => {

@@ -22,6 +22,7 @@ import SeatSelection from "./pages/SeatSelection";
 import MenuSelection from "./pages/MenuSelection";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import Profile from "./components/Profile"; // Import from components directory
+import History from "./pages/History"; // Import the History component
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -67,6 +68,11 @@ const App: React.FC = () => {
           {/* Protected Settings route (currently using Profile) */}
           <Route path="/settings" element={
             isAuthenticated() ? <Profile /> : <Navigate to="/login" />
+          } />
+          
+          {/* Protected History route */}
+          <Route path="/history" element={
+            isAuthenticated() ? <History /> : <Navigate to="/login" />
           } />
         </Route>
 

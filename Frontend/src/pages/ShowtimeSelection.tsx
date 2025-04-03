@@ -89,6 +89,20 @@ const ShowtimeSelection = () => {
     }).format(date);
   };
 
+  // Function to convert 24-hour time to 12-hour format with AM/PM
+  const formatTo12Hour = (time24: string) => {
+    const [hours, minutes] = time24.split(':').map(Number);
+    
+    if (isNaN(hours) || isNaN(minutes)) {
+      return time24; // Return original if parsing failed
+    }
+    
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
+
   // Function to filter showtimes by active date
   const getFilteredShowtimes = () => {
     if (!activeRoom || !activeDate) return [];
@@ -195,9 +209,9 @@ const ShowtimeSelection = () => {
                 >
                   <div className="p-4 flex justify-between items-center">
                     <div className="text-gray-700">
-                      <span className="font-semibold">{showtime.start_time}</span>
+                      <span className="font-semibold">{formatTo12Hour(showtime.start_time)}</span>
                       <span className="mx-2 text-gray-400">—</span>
-                      <span className="text-gray-500">{showtime.end_time}</span>
+                      <span className="text-gray-500">{formatTo12Hour(showtime.end_time)}</span>
                     </div>
                     <div className="text-blue-600">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
