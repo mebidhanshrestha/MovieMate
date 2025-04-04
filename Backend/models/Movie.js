@@ -7,7 +7,8 @@ const movieSchema = new mongoose.Schema({
   end_date: { type: Date, required: true },
   status: { type: String, enum: ["hosting", "expired"], required: true },
   type: { type: String, enum: ["upcoming", "current"], required: true },
-  image: { type: String } // URL for menu image
+  image: { type: String }, // URL for movie image
+  price: { type: Number, default: 0, min: 0 } // Added price field with default 0
 }, { timestamps: true });
 
 module.exports = mongoose.model("Movie", movieSchema);

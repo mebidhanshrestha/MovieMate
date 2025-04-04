@@ -7,6 +7,13 @@ type Seat = {
   status: "available" | "booked";
 };
 
+interface Movie {
+  _id: string;
+  title: string;
+  price: number;
+  // other movie properties
+}
+
 const SeatSelection = () => {
   const { showtimeId, roomId, movieId } = useParams<{ showtimeId: string; roomId: string; movieId: string }>();
   const [seats, setSeats] = useState<Seat[]>([]);
@@ -14,24 +21,33 @@ const SeatSelection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showLegend, setShowLegend] = useState(true);
+  const [movie, setMovie] = useState<Movie | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const date = new URLSearchParams(location.search).get("date") || "";
 
   useEffect(() => {
-    setLoading(true);
-    axios
-      .get(`http://localhost:3001/api/movie/showtimes/${showtimeId}/seats`)
-      .then((response) => {
-        setSeats(response.data.seats);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch seats data
+        const seatsResponse = await axios.get(`http://localhost:3001/api/movie/showtimes/${showtimeId}/seats`);
+        setSeats(seatsResponse.data.seats);
+        
+        // Fetch movie data to get the price
+        const movieResponse = await axios.get(`http://localhost:3001/api/movie/${movieId}`);
+        setMovie(movieResponse.data.movie);
+        
         setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching seats:", error);
-        setError("Unable to load seats. Please try again.");
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError("Unable to load data. Please try again.");
         setLoading(false);
-      });
-  }, [showtimeId]);
+      }
+    };
+    
+    fetchData();
+  }, [showtimeId, movieId]);
 
   const toggleSeatSelection = (seatNumber: string, status: string) => {
     if (status === "booked") return;
@@ -41,6 +57,10 @@ const SeatSelection = () => {
         ? prev.filter((seat) => seat !== seatNumber)
         : [...prev, seatNumber]
     );
+  };
+
+  const getTicketPrice = (): number => {
+    return movie?.price || 0;
   };
 
   // Group seats by row (assuming seat numbers like A1, A2, B1, B2, etc.)
@@ -75,6 +95,14 @@ const SeatSelection = () => {
   return (
     <div className="max-w-4xl my-3 mx-auto p-6 bg-white rounded-lg border">
       <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Select Your Seats</h2>
+      
+      {/* Movie info */}
+      {movie && (
+        <div className="mb-4 text-center">
+          <h3 className="text-xl font-bold">{movie.title}</h3>
+          <p className="text-gray-600">Ticket Price: ${getTicketPrice().toFixed(2)}</p>
+        </div>
+      )}
       
       {/* Info and Legend */}
       {showLegend && (
@@ -154,7 +182,7 @@ const SeatSelection = () => {
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-600">Ticket price</p>
-            <p className="font-bold">${(3 * selectedSeats.length).toFixed(2)}</p>
+            <p className="font-bold">${(getTicketPrice() * selectedSeats.length).toFixed(2)}</p>
           </div>
         </div>
         
@@ -165,7 +193,16 @@ const SeatSelection = () => {
             boxShadow: selectedSeats.length > 0 ? "0 4px 12px rgba(251, 199, 0, 0.3)" : "none"
           }}
           disabled={selectedSeats.length === 0}
-          onClick={() => navigate("/menu", { state: { selectedSeats, showtimeId, roomId, movieId } })}
+          onClick={() => navigate("/menu", { 
+            state: { 
+              selectedSeats, 
+              showtimeId, 
+              movieId, 
+              roomId,
+              date,
+              ticketPrice: getTicketPrice() // Pass the ticket price to the next page
+            } 
+          })}
         >
           {selectedSeats.length === 0 ? "Please select seats" : "Next: Food & Drinks"}
         </button>

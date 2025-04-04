@@ -25,7 +25,7 @@ const upload = multer({ storage: storage });
 // Add a movie to the database with image upload
 const addMovie = async (req, res) => {
   try {
-    const { title, description, duration, start_date, end_date, status, type } = req.body;
+    const { title, description, duration, start_date, end_date, status, type, price } = req.body;
 
     if (!title || !duration || !start_date || !end_date || !status || !type || !req.file) {
       return res.status(400).json({ message: "All fields are required" });
@@ -39,7 +39,8 @@ const addMovie = async (req, res) => {
       end_date,
       status,
       type,
-      image: imageUrl
+      image: imageUrl,
+      price: price || 0 // Handle the price field
     });
     await newMovie.save();
 
@@ -85,7 +86,7 @@ const getMovieById = async (req, res) => {
 const updateMovie = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, duration, start_date, end_date, status, type } = req.body;
+    const { title, description, duration, start_date, end_date, status, type, price } = req.body;
     
     const movie = await Movie.findById(id);
     if (!movie) {
@@ -100,6 +101,7 @@ const updateMovie = async (req, res) => {
     movie.end_date = end_date || movie.end_date;
     movie.status = status || movie.status;
     movie.type = type || movie.type;
+    movie.price = price !== undefined ? price : movie.price; // Update price if provided
     
     // Update image if a new one is provided
     if (req.file) {

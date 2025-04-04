@@ -11,6 +11,7 @@ interface Movie {
   status: string;
   type: string;
   image: string;
+  price: number; // Added price field
 }
 
 const AdminMovie = () => {
@@ -28,6 +29,7 @@ const AdminMovie = () => {
     status: "hosting",
     type: "current",
     image: null as File | null,
+    price: 0, // Default price value
   };
   
   const [movie, setMovie] = useState(initialMovieState);
@@ -70,6 +72,7 @@ const AdminMovie = () => {
         status: movieData.status,
         type: movieData.type,
         image: null, // The existing image will be kept if no new one is selected
+        price: movieData.price || 0, // Get price, default to 0 if not available
       });
       
       setIsEditing(true);
@@ -108,6 +111,7 @@ const AdminMovie = () => {
     formData.append("end_date", movie.end_date);
     formData.append("status", movie.status);
     formData.append("type", movie.type);
+    formData.append("price", movie.price.toString()); // Add price to form data
     
     // Only append image if a new one is selected
     if (movie.image) {
@@ -215,7 +219,7 @@ const AdminMovie = () => {
         </div>
 
         <div className="flex gap-4">
-          <div className="w-1/2">
+          <div className="w-1/3">
             <label className="block font-medium text-gray-700">Status:</label>
             <select
               name="status"
@@ -227,7 +231,7 @@ const AdminMovie = () => {
               <option value="expired">Expired</option>
             </select>
           </div>
-          <div className="w-1/2">
+          <div className="w-1/3">
             <label className="block font-medium text-gray-700">Type:</label>
             <select
               name="type"
@@ -238,6 +242,19 @@ const AdminMovie = () => {
               <option value="current">Current</option>
               <option value="upcoming">Upcoming</option>
             </select>
+          </div>
+          <div className="w-1/3">
+            <label className="block font-medium text-gray-700">Price ($):</label>
+            <input
+              type="number"
+              name="price"
+              value={movie.price}
+              onChange={handleChange}
+              required
+              min="0"
+              step="0.01"
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            />
           </div>
         </div>
 
@@ -301,6 +318,7 @@ const AdminMovie = () => {
                   <th className="py-3 px-4 border-b">Image</th>
                   <th className="py-3 px-4 border-b">Title</th>
                   <th className="py-3 px-4 border-b">Duration</th>
+                  <th className="py-3 px-4 border-b">Price</th>
                   <th className="py-3 px-4 border-b">Start Date</th>
                   <th className="py-3 px-4 border-b">End Date</th>
                   <th className="py-3 px-4 border-b">Status</th>
@@ -320,6 +338,7 @@ const AdminMovie = () => {
                     </td>
                     <td className="py-3 px-4 border-b">{movieItem.title}</td>
                     <td className="py-3 px-4 border-b">{movieItem.duration} min</td>
+                    <td className="py-3 px-4 border-b">${movieItem.price?.toFixed(2) || '0.00'}</td>
                     <td className="py-3 px-4 border-b">{formatDate(movieItem.start_date)}</td>
                     <td className="py-3 px-4 border-b">{formatDate(movieItem.end_date)}</td>
                     <td className="py-3 px-4 border-b">

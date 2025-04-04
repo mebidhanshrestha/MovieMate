@@ -3,16 +3,25 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 interface MenuItem {
-  menu_id: string;
-  quantity: number;
+  _id: string;
+  name: string;
+  price: number;
+}
+
+interface Movie {
+  _id: string;
+  title: string;
+  price: number;
 }
 
 const BookingConfirmation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // State to store menu prices
-  const [menuPrices, setMenuPrices] = useState<{[key: string]: number}>({});
+  // State to store menu items and movie details
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Extract state safely
   const { 
@@ -21,8 +30,7 @@ const BookingConfirmation: React.FC = () => {
     movieId, 
     roomId, 
     date, 
-    selectedItems, 
-    ticketPrice 
+    selectedItems
   }: {
     selectedSeats?: string[];
     showtimeId?: string;
@@ -30,39 +38,55 @@ const BookingConfirmation: React.FC = () => {
     roomId?: string;
     date?: string;
     selectedItems?: { [key: string]: number };
-    ticketPrice?: number;
   } = location.state || {};
 
-  // Fetch menu prices on component mount
+  // Fetch menu items and movie details on component mount
   useEffect(() => {
-    const fetchMenuPrices = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/menu');
-        const priceMap = response.data.reduce((acc: any, item: any) => {
-          acc[item._id] = item.price;
-          return acc;
-        }, {});
-        setMenuPrices(priceMap);
+        setLoading(true);
+        // Fetch menu items
+        const menuResponse = await axios.get('http://localhost:3001/api/menu');
+        setMenuItems(menuResponse.data);
+        
+        // Fetch movie details if movieId exists
+        if (movieId) {
+          const movieResponse = await axios.get(`http://localhost:3001/api/movie/${movieId}`);
+          setMovie(movieResponse.data.movie);
+        }
       } catch (error) {
-        console.error('Error fetching menu prices:', error);
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchMenuPrices();
-  }, []);
+    fetchData();
+  }, [movieId]);
+
+  // Get menu item details by ID
+  const getMenuItemById = (id: string) => {
+    return menuItems.find(item => item._id === id) || { name: "Unknown Item", price: 0 };
+  };
+
+  // Get the ticket price from the movie
+  const getTicketPrice = (): number => {
+    return movie?.price || 0;
+  };
 
   // Calculate total price of menu items
   const calculateMenuItemsTotal = (): number => {
     if (!selectedItems) return 0;
     return Object.entries(selectedItems).reduce((total, [itemId, quantity]) => {
-      const itemPrice = menuPrices[itemId] || 0;
-      return total + (itemPrice * (quantity as number));
+      const item = getMenuItemById(itemId);
+      return total + (item.price * (quantity as number));
     }, 0);
   };
 
   // Calculate total price including ticket and menu items
   const calculateTotalPrice = (): number => {
-    const ticketTotal = (ticketPrice || 0) * (selectedSeats?.length || 0);
+    const ticketPrice = getTicketPrice();
+    const ticketTotal = ticketPrice * (selectedSeats?.length || 0);
     const menuItemsTotal = calculateMenuItemsTotal();
     return ticketTotal + menuItemsTotal;
   };
@@ -99,57 +123,185 @@ const BookingConfirmation: React.FC = () => {
     });
   };
 
+  // Format the date string
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Today";
+    
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "Today";
+      }
+      
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Today";
+    }
+  };
+
+  // Get current showtime
+  const formatShowtime = (time_slot?: string) => {
+    // This is a placeholder - you may need to fetch actual showtime data
+    // from your backend based on the showtimeId
+    return "7:30 PM"; // Default value
+  };
+
   // Render loading state if needed
-  if (!location.state) {
-    return <div>Loading booking details...</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2" style={{borderColor: "#FBC700"}}></div>
+      </div>
+    );
+  }
+
+  if (!location.state || !movie) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <div style={{backgroundColor: "#fff5d7"}} className="border p-4 rounded-lg shadow-md border-yellow-400">
+          <p className="text-gray-800">Unable to load booking details. Please try again.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold mb-4 text-center">Booking Confirmation</h2>
+    <div className="container mx-auto px-4 py-6 bg-gray-50">
+      <div className="max-w-lg mx-auto bg-white rounded-xl shadow-lg overflow-hidden" style={{borderTop: "8px solid #FBC700"}}>
+        {/* Header Section */}
+        <div className="p-4 sm:p-6 text-center border-b">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-1" style={{color: "#e3b400"}}>Booking Confirmation</h2>
+          <p className="text-gray-500 text-sm sm:text-base">Please review your order details</p>
+        </div>
+        
+        {/* Content Section */}
+        <div className="p-4 sm:p-6">
+          {/* Movie Details */}
+          <div className="mb-6">
+            <div className="flex items-start">
+              <div className="rounded-full p-3 mr-4 flex-shrink-0" style={{backgroundColor: "#FBC700"}}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h18M3 16h18" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold">Movie</h3>
+                <p className="text-xl font-bold">{movie.title}</p>
+                <div className="text-gray-500 text-sm mt-1">
+                  <p>{formatDate(date)} • {formatShowtime(showtimeId)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
           
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold">Selected Seats</h3>
-            <p>{selectedSeats?.length} seat(s)</p>
+          {/* Seats */}
+          <div className="mb-6">
+            <div className="flex items-start">
+              <div className="rounded-full p-3 mr-4 flex-shrink-0" style={{backgroundColor: "#FBC700"}}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold">Selected Seats</h3>
+                <div className="flex flex-wrap mt-2">
+                  {selectedSeats?.map((seat) => (
+                    <span 
+                      key={seat} 
+                      className="inline-block px-3 py-1 mr-2 mb-2 rounded-full text-sm font-medium"
+                      style={{backgroundColor: "#fff5d7", color: "#e3b400"}}
+                    >
+                      {seat}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
+          {/* Snacks - Redesigned */}
           {selectedItems && Object.keys(selectedItems).length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">Selected Snacks</h3>
-              <ul className="list-disc pl-5">
-                {Object.entries(selectedItems).map(([itemId, quantity]) => (
-                  <li key={itemId}>
-                    {itemId}: {quantity} 
-                    (${((menuPrices[itemId] || 0) * (quantity as number)).toFixed(2)})
-                  </li>
-                ))}
-              </ul>
+            <div className="mb-6">
+              <div className="flex items-start">
+                <div className="rounded-full p-3 mr-4 flex-shrink-0" style={{backgroundColor: "#FBC700"}}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold mb-2">Selected Snacks</h3>
+                  <div className="space-y-3">
+                    {Object.entries(selectedItems).map(([itemId, quantity]) => {
+                      const item = getMenuItemById(itemId);
+                      return (
+                        <div key={itemId} className="bg-gray-50 rounded-lg p-3 flex justify-between items-center">
+                          <div className="flex items-center">
+                            <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center mr-3 shadow-sm">
+                              <span className="font-medium" style={{color: "#e3b400"}}>{quantity}</span>
+                            </div>
+                            <span className="text-gray-800">{item.name}</span>
+                          </div>
+                          <span className="font-medium text-gray-800">${(item.price * (quantity as number)).toFixed(2)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="mt-4 border-t pt-4">
-            <div className="flex justify-between">
-              <span>Ticket Total:</span>
-              <span>${((ticketPrice || 0) * (selectedSeats?.length || 0)).toFixed(2)}</span>
+          {/* Price Summary */}
+          <div className="mt-8 rounded-xl p-4" style={{backgroundColor: "#fff5d7"}}>
+            <div className="flex justify-between items-center mb-2 text-sm sm:text-base">
+              <span className="text-gray-600">Ticket Price:</span>
+              <span className="font-medium">${getTicketPrice().toFixed(2)} × {selectedSeats?.length}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Menu Items Total:</span>
-              <span>${calculateMenuItemsTotal().toFixed(2)}</span>
+            <div className="flex justify-between items-center mb-2 text-sm sm:text-base">
+              <span className="text-gray-600">Ticket Total:</span>
+              <span className="font-medium">${(getTicketPrice() * (selectedSeats?.length || 0)).toFixed(2)}</span>
             </div>
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total Price:</span>
-              <span>${calculateTotalPrice().toFixed(2)}</span>
+            <div className="flex justify-between items-center mb-2 text-sm sm:text-base">
+              <span className="text-gray-600">Menu Items Total:</span>
+              <span className="font-medium">${calculateMenuItemsTotal().toFixed(2)}</span>
+            </div>
+            <div className="h-px bg-gray-300 my-3"></div>
+            <div className="flex justify-between items-center text-base sm:text-lg">
+              <span className="font-bold">Total Price:</span>
+              <span className="font-bold" style={{color: "#e3b400"}}>${calculateTotalPrice().toFixed(2)}</span>
             </div>
           </div>
+        </div>
 
+        {/* Footer/Button Section */}
+        <div className="px-4 pb-6 sm:px-6">
           <button
-            className="w-full mt-6 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            className="w-full py-3 sm:py-4 rounded-lg font-bold text-white transition duration-300 transform hover:scale-105"
+            style={{backgroundColor: "#FBC700", boxShadow: "0 4px 12px rgba(251, 199, 0, 0.3)"}}
             onClick={handleConfirmBooking}
           >
-            Confirm Booking
+            <div className="flex justify-center items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Confirm Booking
+            </div>
           </button>
+          <div className="text-center mt-4">
+            <button 
+              className="text-gray-500 hover:text-gray-700"
+              onClick={() => navigate(-1)}
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     </div>
