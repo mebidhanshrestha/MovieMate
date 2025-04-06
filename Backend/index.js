@@ -7,6 +7,9 @@ const movieRoute = require('./routes/movieRoute');
 const roomRoute = require('./routes/roomRoute');
 const menuRoutes = require('./routes/menuRoutes');
 const historyRoutes = require('./routes/historyRoute'); // Add this line
+const Movie = require('./models/Movie'); // Adjust path as needed
+// npm install node-cron
+const cron = require('node-cron');
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +35,25 @@ app.use("/api/history", historyRoutes); // Add this line
 // Routes placeholder
 app.get('/', (req, res) => {
   res.send('Movie Booking API is running...');
+});
+
+
+
+// Run every day at midnight
+cron.schedule('5 21 * * *', async () => {
+  try {
+    const currentDate = new Date();
+    const result = await Movie.updateMany(
+      { end_date: { $lt: currentDate }, status: "hosting" },
+      { $set: { status: "expired" } }
+    );
+    console.log(`Updated ${result.modifiedCount} expired movies`);
+  } catch (error) {
+    console.error('Error updating expired movies:', error);
+  }
+}, {
+  scheduled: true,
+  timezone: "Asia/Kathmandu"
 });
 
 const PORT = 3001;

@@ -14,6 +14,13 @@ interface Movie {
   price: number;
 }
 
+interface Showtime {
+  _id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+}
+
 const BookingConfirmation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -21,6 +28,7 @@ const BookingConfirmation: React.FC = () => {
   // State to store menu items and movie details
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [movie, setMovie] = useState<Movie | null>(null);
+  const [showtime, setShowtime] = useState<Showtime | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Extract state safely
@@ -54,6 +62,17 @@ const BookingConfirmation: React.FC = () => {
           const movieResponse = await axios.get(`http://localhost:3001/api/movie/${movieId}`);
           setMovie(movieResponse.data.movie);
         }
+        
+        // Fetch showtime details if showtimeId and roomId exist
+        if (showtimeId && roomId) {
+          const roomResponse = await axios.get(`http://localhost:3001/api/room/${roomId}/showtimes`);
+          const showtimes = roomResponse.data.showtimes;
+          // Find the specific showtime by its ID
+          const selectedShowtime = showtimes.find((st: Showtime) => st._id === showtimeId);
+          if (selectedShowtime) {
+            setShowtime(selectedShowtime);
+          }
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -62,7 +81,7 @@ const BookingConfirmation: React.FC = () => {
     };
 
     fetchData();
-  }, [movieId]);
+  }, [movieId, showtimeId, roomId]);
 
   // Get menu item details by ID
   const getMenuItemById = (id: string) => {
@@ -104,7 +123,7 @@ const BookingConfirmation: React.FC = () => {
       user_id: localStorage.getItem("id"),
       movie_id: movieId,
       room_id: roomId,
-      date,
+      date: Date.now(),
       time_slot: showtimeId,
       seats: selectedSeats,
       menu_items: preparedMenuItems,
@@ -144,13 +163,6 @@ const BookingConfirmation: React.FC = () => {
       console.error("Error formatting date:", error);
       return "Today";
     }
-  };
-
-  // Get current showtime
-  const formatShowtime = (time_slot?: string) => {
-    // This is a placeholder - you may need to fetch actual showtime data
-    // from your backend based on the showtimeId
-    return "7:30 PM"; // Default value
   };
 
   // Render loading state if needed
@@ -194,9 +206,24 @@ const BookingConfirmation: React.FC = () => {
               <div className="flex-1">
                 <h3 className="text-lg font-semibold">Movie</h3>
                 <p className="text-xl font-bold">{movie.title}</p>
-                <div className="text-gray-500 text-sm mt-1">
-                  <p>{formatDate(date)} • {formatShowtime(showtimeId)}</p>
-                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Date & Time */}
+          <div className="mb-6">
+            <div className="flex items-start">
+              <div className="rounded-full p-3 mr-4 flex-shrink-0" style={{backgroundColor: "#FBC700"}}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold">Date & Time</h3>
+                <p className="text-gray-600">{showtime ? formatDate(showtime.date) : formatDate(date)}</p>
+                <p className="text-gray-800 font-medium">
+                  {showtime ? `${showtime.start_time} - ${showtime.end_time}` : "Time not available"}
+                </p>
               </div>
             </div>
           </div>

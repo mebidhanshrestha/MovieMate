@@ -18,6 +18,14 @@ interface Room {
   name: string;
 }
 
+interface Showtime {
+  _id: string;
+  movie_id: any; // Using 'any' to handle potentially different formats
+  date: string;
+  start_time: string;
+  end_time: string;
+}
+
 const AdminPanel = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -26,14 +34,28 @@ const AdminPanel = () => {
   const [showtimes, setShowtimes] = useState<{ date: string; times: { start_time: string; end_time: string }[] }[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // State for existing showtimes
+  const [existingShowtimes, setExistingShowtimes] = useState<Showtime[]>([]);
+  const [editingShowtime, setEditingShowtime] = useState<Showtime | null>(null);
+  const [editDate, setEditDate] = useState<string>("");
+  const [editStartTime, setEditStartTime] = useState<string>("");
+  const [editEndTime, setEditEndTime] = useState<string>("");
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [currentRoomId, setCurrentRoomId] = useState<string>("");
+  
   // Fetch movies
-  useEffect(() => {
-    axios.get("http://localhost:3001/api/movie/")
-      .then((res) => {
-        setMovies(res.data.movies);
-      })
-      .catch((error) => console.error("Error fetching movies:", error));
-  }, []);
+ // Inside your useEffect for fetching movies, add this filter
+useEffect(() => {
+  axios.get("http://localhost:3001/api/movie/")
+    .then((res) => {
+      // Filter out movies with "expired" status
+      const activeMovies = res.data.movies.filter(
+        (movie: Movie) => movie.status === "hosting"
+      );
+      setMovies(activeMovies);
+    })
+    .catch((error) => console.error("Error fetching movies:", error));
+}, []);
 
   // Fetch rooms
   useEffect(() => {
@@ -43,6 +65,13 @@ const AdminPanel = () => {
       })
       .catch((error) => console.error("Error fetching rooms:", error));
   }, []);
+
+  // Safe getter for movie title
+  const getMovieTitle = (showtime: Showtime) => {
+    if (!showtime.movie_id) return "Unknown Movie";
+    if (typeof showtime.movie_id === 'string') return "Movie";
+    return showtime.movie_id.title || "Untitled Movie";
+  };
 
   const addShowtime = (date: string) => {
     setShowtimes([...showtimes, { date, times: [] }]);
@@ -97,19 +126,259 @@ const AdminPanel = () => {
       alert("Movie allocated successfully!");
       console.log(response.data);
       
-      // Refresh the page after successful allocation
-      window.location.reload();
+      // Refresh showtimes after allocation instead of reloading page
+      fetchShowtimes(selectedRoom);
+      setShowtimes([]);
       
     } catch (error) {
       console.error("Error allocating movie:", error);
       alert("Failed to allocate movie.");
+    } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Fetch showtimes for a room
+  const fetchShowtimes = (roomId: string) => {
+    setIsLoading(true);
+    axios.get(`http://localhost:3001/api/room/${roomId}/showtimes`)
+      .then((res) => {
+        console.log("Fetched showtimes:", res.data.showtimes);
+        setExistingShowtimes(res.data.showtimes);
+        setCurrentRoomId(roomId);
+      })
+      .catch((error) => {
+        console.error("Error fetching showtimes:", error);
+        alert("Failed to fetch showtimes for this room.");
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  // Handle room selection change
+  const handleRoomChange = (roomId: string) => {
+    setSelectedRoom(roomId);
+    if (roomId) {
+      fetchShowtimes(roomId);
+    } else {
+      setExistingShowtimes([]);
+      setCurrentRoomId("");
+    }
+  };
+
+  // Setup for editing a showtime
+  const setupEditShowtime = (showtime: Showtime) => {
+    setEditingShowtime(showtime);
+    
+    // Format date string from ISO to YYYY-MM-DD
+    const dateObj = new Date(showtime.date);
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    
+    setEditDate(formattedDate);
+    setEditStartTime(showtime.start_time);
+    setEditEndTime(showtime.end_time);
+    setIsEditing(true);
+  };
+
+  // Cancel editing
+  const cancelEdit = () => {
+    setEditingShowtime(null);
+    setEditDate("");
+    setEditStartTime("");
+    setEditEndTime("");
+    setIsEditing(false);
+  };
+
+  // Save edited showtime
+  const saveEditedShowtime = async () => {
+    if (!editingShowtime || !editDate || !editStartTime || !editEndTime) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const response = await axios.put(`http://localhost:3001/api/room/showtime/${editingShowtime._id}`, {
+        room_id: currentRoomId,
+        date: editDate,
+        start_time: editStartTime,
+        end_time: editEndTime
+      });
+
+      alert("Showtime updated successfully!");
+      
+      // Refresh showtimes and reset edit state
+      fetchShowtimes(currentRoomId);
+      cancelEdit();
+      
+    } catch (error) {
+      console.error("Error updating showtime:", error);
+      alert("Failed to update showtime.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Delete showtime
+  const deleteShowtime = async (showtimeId: string) => {
+    if (!confirm("Are you sure you want to delete this showtime?")) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const response = await axios.delete(`http://localhost:3001/api/room/showtime/${showtimeId}`, {
+        data: { room_id: currentRoomId }
+      });
+
+      alert("Showtime deleted successfully!");
+      
+      // Refresh showtimes
+      fetchShowtimes(currentRoomId);
+      
+    } catch (error) {
+      console.error("Error deleting showtime:", error);
+      alert("Failed to delete showtime.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    try {
+      const options: Intl.DateTimeFormatOptions = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      return new Date(dateString).toLocaleDateString(undefined, options);
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return dateString;
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white shadow-lg rounded-lg">
       <h2 className="text-3xl font-bold mb-6 text-primary">Allocate Movie to Room</h2>
+
+      {/* Room Selection */}
+      <div className="mb-4">
+        <label className="block font-medium text-gray-700">Select Room:</label>
+        <select 
+          className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" 
+          value={selectedRoom} 
+          onChange={(e) => handleRoomChange(e.target.value)}
+          disabled={isLoading}
+        >
+          <option value="">Select a room</option>
+          {rooms.map((room) => (
+            <option key={room._id} value={room._id}>{room.name}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Existing Showtimes */}
+      {selectedRoom && existingShowtimes.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-xl font-bold mb-3 text-primary">Current Showtimes</h3>
+          <div className="border border-gray-300 rounded-lg p-4">
+            {isEditing && editingShowtime ? (
+              <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                <h4 className="font-bold mb-2">Edit Showtime</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                  <div>
+                    <label className="block font-medium text-gray-700 mb-1">Date:</label>
+                    <input 
+                      type="date" 
+                      value={editDate} 
+                      onChange={(e) => setEditDate(e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-lg" 
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-medium text-gray-700 mb-1">Start Time:</label>
+                    <input 
+                      type="time" 
+                      value={editStartTime} 
+                      onChange={(e) => setEditStartTime(e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-lg" 
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-medium text-gray-700 mb-1">End Time:</label>
+                    <input 
+                      type="time" 
+                      value={editEndTime} 
+                      onChange={(e) => setEditEndTime(e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-lg" 
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button 
+                    className="bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600"
+                    onClick={cancelEdit}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600"
+                    onClick={saveEditedShowtime}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {existingShowtimes.map((showtime) => (
+                  <div key={showtime._id} className="border-b border-gray-200 pb-3 last:border-b-0 last:pb-0">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between">
+                      <div>
+                        <p className="font-medium">{getMovieTitle(showtime)}</p>
+                        <p className="text-sm text-gray-600">
+                          {formatDate(showtime.date)} • {showtime.start_time} - {showtime.end_time}
+                        </p>
+                      </div>
+                      <div className="flex space-x-2 mt-2 md:mt-0">
+                        <button 
+                          className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600"
+                          onClick={() => setupEditShowtime(showtime)}
+                          disabled={isLoading}
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600"
+                          onClick={() => deleteShowtime(showtime._id)}
+                          disabled={isLoading}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <h3 className="text-xl font-bold mb-3 text-primary">Add New Showtime</h3>
 
       {/* Movie Selection */}
       <div className="mb-4">
@@ -123,22 +392,6 @@ const AdminPanel = () => {
           <option value="">Select a movie</option>
           {movies.map((movie) => (
             <option key={movie._id} value={movie._id}>{movie.title}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Room Selection */}
-      <div className="mb-4">
-        <label className="block font-medium text-gray-700">Select Room:</label>
-        <select 
-          className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" 
-          value={selectedRoom} 
-          onChange={(e) => setSelectedRoom(e.target.value)}
-          disabled={isLoading}
-        >
-          <option value="">Select a room</option>
-          {rooms.map((room) => (
-            <option key={room._id} value={room._id}>{room.name}</option>
           ))}
         </select>
       </div>

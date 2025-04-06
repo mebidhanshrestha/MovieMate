@@ -33,6 +33,11 @@ interface SalesRecord {
   payment_method: string;
   total_amount: number;
   concessionsTotal?: number;
+  seats?: string[]; // Add seats array
+  room_id?: { // Add room information
+    _id: string;
+    name: string;
+  };
 }
 
 interface HistoryData {
@@ -97,6 +102,12 @@ const History: React.FC = () => {
   const getTotalItems = (menuItems?: MenuItemPurchase[]): number => {
     if (!menuItems) return 0;
     return menuItems.reduce((total, item) => total + (item.quantity || 0), 0);
+  };
+
+  // Format seats array to display nicely
+  const formatSeats = (seats?: string[]): string => {
+    if (!seats || seats.length === 0) return "N/A";
+    return seats.join(", ");
   };
 
   useEffect(() => {
@@ -383,12 +394,22 @@ const History: React.FC = () => {
                       </h3>
                       <div className="text-xs sm:text-sm text-gray-600 space-y-1">
                         <div>
-                          <span className="font-medium">Date:</span>{" "}
+                          <span className="font-medium">Movie Date:</span>{" "}
                           {formatDate(sale.date)}
                         </div>
+                  
+                        {/* Add seat information */}
                         <div>
-                          <span className="font-medium">Time:</span> {sale.time}
+                          <span className="font-medium">Seats:</span>{" "}
+                          {formatSeats(sale.seats)}
                         </div>
+                        {/* Add room information */}
+                        {sale.room_id && (
+                          <div>
+                            <span className="font-medium">Room:</span>{" "}
+                            {sale.room_id.name || "Unknown"}
+                          </div>
+                        )}
                         <div>
                           <span className="font-medium">Payment:</span>{" "}
                           {sale.payment_method}
@@ -425,6 +446,7 @@ const History: React.FC = () => {
 
         {activeTab === "concessions" && (
           <>
+            {/* Concessions tab content remains unchanged */}
             {history.concessions.length === 0 ? (
               <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg">
                 <FiCoffee className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-yellow-500" />
@@ -592,6 +614,18 @@ const History: React.FC = () => {
                           <span className="font-medium">Type:</span>{" "}
                           {selectedSale.movie_id.type}
                         </div>
+                        {/* Add seat information to modal */}
+                        <div>
+                          <span className="font-medium">Seats:</span>{" "}
+                          {formatSeats(selectedSale.seats)}
+                        </div>
+                        {/* Add room information to modal */}
+                        {selectedSale.room_id && (
+                          <div>
+                            <span className="font-medium">Room:</span>{" "}
+                            {selectedSale.room_id.name || "Unknown"}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Menu, X, User, Search, Bell } from "lucide-react";
+import { Menu, X, User, Search, Bell, Award } from "lucide-react";
 import { useLocation, useNavigate } from 'react-router-dom';
 import logo from "../assets/images/moviemate-logo.svg";
 
@@ -109,6 +109,12 @@ const Header = () => {
     navigate("/profile");
   };
 
+  const goToLoyaltyPoints = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation(); // Prevent the dropdown from closing
+    setIsProfileDropdownOpen(false);
+    navigate("/loyalty-points");
+  };
+
   const navigateTo = (path: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     navigate(path);
@@ -175,6 +181,16 @@ const Header = () => {
               >
                 <Bell className="h-5 w-5 text-gray-500" />
               </button>
+              {isLoggedIn && (
+                <button 
+                  onClick={navigateTo("/loyalty-points")}
+                  className="flex items-center gap-x-1 text-gray-500 hover:text-primary transition-colors duration-200 p-2 rounded-full hover:bg-gray-100"
+                  aria-label="Loyalty Points"
+                >
+                  <Award className="h-5 w-5" style={{ color: "#FBC700" }} />
+                  <span className="text-sm font-medium"></span>
+                </button>
+              )}
             </div>
             
             {isLoggedIn ? (
@@ -198,6 +214,15 @@ const Header = () => {
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Your Profile
+                    </button>
+                    <button
+                      onClick={goToLoyaltyPoints}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <div className="flex items-center gap-x-2">
+                        <Award className="h-4 w-4" style={{ color: "#FBC700" }} />
+                        <span>Loyalty Points</span>
+                      </div>
                     </button>
                     <button
                       onClick={handleLogout}
@@ -243,6 +268,17 @@ const Header = () => {
               <Bell className="h-5 w-5 text-gray-500" />
             </button>
             
+            {isLoggedIn && (
+              <button 
+                onClick={navigateTo("/loyalty-points")}
+                className="flex items-center gap-x-1 text-gray-500 hover:text-primary transition-colors duration-200 p-1.5 rounded-full hover:bg-gray-100"
+                aria-label="Loyalty Points"
+              >
+                <Award className="h-4 w-4" style={{ color: "#FBC700" }} />
+                <span className="text-xs font-medium">250</span>
+              </button>
+            )}
+            
             {isLoggedIn ? (
               <div className="relative">
                 <button
@@ -264,6 +300,15 @@ const Header = () => {
                       className="block w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Your Profile
+                    </button>
+                    <button
+                      onClick={goToLoyaltyPoints}
+                      className="block w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <div className="flex items-center gap-x-1.5">
+                        <Award className="h-3.5 w-3.5" style={{ color: "#FBC700" }} />
+                        <span>Loyalty Points</span>
+                      </div>
                     </button>
                     <button
                       onClick={handleLogout}
@@ -311,6 +356,17 @@ const Header = () => {
             </button>
             
             {isLoggedIn && (
+              <button 
+                onClick={navigateTo("/loyalty-points")}
+                className="flex items-center gap-x-1 text-gray-500 hover:text-primary transition-colors duration-200 p-1.5"
+                aria-label="Loyalty Points"
+              >
+                <Award className="h-4 w-4" style={{ color: "#FBC700" }} />
+                <span className="text-xs font-medium">250</span>
+              </button>
+            )}
+            
+            {isLoggedIn && (
               <div className="relative" ref={mobileDropdownRef}>
                 <button
                   onClick={toggleProfileDropdown}
@@ -331,6 +387,15 @@ const Header = () => {
                       className="block w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Your Profile
+                    </button>
+                    <button
+                      onClick={goToLoyaltyPoints}
+                      className="block w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <div className="flex items-center gap-x-1.5">
+                        <Award className="h-3.5 w-3.5" style={{ color: "#FBC700" }} />
+                        <span>Loyalty Points</span>
+                      </div>
                     </button>
                     <button
                       onClick={handleLogout}
@@ -390,6 +455,19 @@ const Header = () => {
             >
               History
             </a>
+            {isLoggedIn && (
+              <a
+                href="/loyalty-points"
+                onClick={navigateTo("/loyalty-points")}
+                className={`block px-3 py-1.5 text-sm font-medium ${isActive('/loyalty-points') || 'text-gray-700 hover:bg-gray-100 hover:text-primary'} ${isActive('/loyalty-points') && 'bg-primary-50'}`}
+                aria-current={location.pathname === '/loyalty-points' ? 'page' : undefined}
+              >
+                <div className="flex items-center gap-x-2">
+                  <Award className="h-3.5 w-3.5" style={{ color: "#FBC700" }} />
+                  <span>Loyalty Points (250)</span>
+                </div>
+              </a>
+            )}
             {!isLoggedIn && (
               <div className="px-3 py-2 space-y-2 border-t border-gray-50 mt-1.5">
                 <a 

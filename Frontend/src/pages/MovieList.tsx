@@ -8,6 +8,7 @@ type Movie = {
   image: string;
   duration: string;
   type: string;
+  status: string; // Added this property
 };
 
 type TabType = "current" | "upcoming" | "all";
@@ -17,12 +18,30 @@ const MovieList = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   
+  // useEffect(() => {
+  //   setLoading(true);
+  //   axios
+  //     .get("http://localhost:3001/api/movie")
+  //     .then((response) => {
+  //       setMovies(response.data.movies);
+  //       setLoading(false);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error fetching movies:", error);
+  //       setLoading(false);
+  //     });
+  // }, []);
+
   useEffect(() => {
     setLoading(true);
     axios
       .get("http://localhost:3001/api/movie")
       .then((response) => {
-        setMovies(response.data.movies);
+        // Only keep movies with "hosting" status
+        const activeMovies = response.data.movies.filter(
+          (movie: Movie) => movie.status === "hosting"
+        );
+        setMovies(activeMovies);
         setLoading(false);
       })
       .catch((error) => {

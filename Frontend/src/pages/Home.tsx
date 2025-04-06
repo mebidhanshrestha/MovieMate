@@ -47,6 +47,32 @@ export default function Home(): JSX.Element {
   const movieScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch movies from the API
+  // useEffect(() => {
+  //   const fetchMovies = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const response = await axios.get("http://localhost:3001/api/movie");
+  //       const allMovies = response.data.movies || [];
+        
+  //       setMovies(allMovies);
+        
+  //       // Filter current and upcoming movies
+  //       const current = allMovies.filter((movie: Movie) => movie.type === "current");
+  //       const upcoming = allMovies.filter((movie: Movie) => movie.type === "upcoming");
+        
+  //       setCurrentMovies(current);
+  //       setUpcomingMovies(upcoming);
+  //       setLoading(false);
+  //     } catch (err) {
+  //       console.error("Error fetching movies:", err);
+  //       setError("Failed to load movies");
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchMovies();
+  // }, []);
+
   useEffect(() => {
     const fetchMovies = async () => {
       try {
@@ -54,11 +80,14 @@ export default function Home(): JSX.Element {
         const response = await axios.get("http://localhost:3001/api/movie");
         const allMovies = response.data.movies || [];
         
-        setMovies(allMovies);
+        // Filter out movies with "expired" status - only keep "hosting" status
+        const activeMovies = allMovies.filter((movie: Movie) => movie.status === "hosting");
         
-        // Filter current and upcoming movies
-        const current = allMovies.filter((movie: Movie) => movie.type === "current");
-        const upcoming = allMovies.filter((movie: Movie) => movie.type === "upcoming");
+        setMovies(activeMovies);
+        
+        // Filter current and upcoming movies (only from active/hosting movies)
+        const current = activeMovies.filter((movie: Movie) => movie.type === "current");
+        const upcoming = activeMovies.filter((movie: Movie) => movie.type === "upcoming");
         
         setCurrentMovies(current);
         setUpcomingMovies(upcoming);
@@ -69,7 +98,7 @@ export default function Home(): JSX.Element {
         setLoading(false);
       }
     };
-
+  
     fetchMovies();
   }, []);
 

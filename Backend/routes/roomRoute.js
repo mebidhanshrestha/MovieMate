@@ -1,11 +1,13 @@
 const express = require("express");
-const { allocateMovieToRoom, getRoomShowtimes, getRooms } = require("../controllers/roomController");
+const { allocateMovieToRoom, getRoomShowtimes, getRooms, updateShowtime, deleteShowtime } = require("../controllers/roomController");
 
 const router = express.Router();
 
 router.post("/allocate-movie", allocateMovieToRoom);
 router.get("/:room_id/showtimes", getRoomShowtimes);
-
+// Add these two new routes after your existing routes
+router.put("/showtime/:showtimeId", updateShowtime);
+router.delete("/showtime/:showtimeId", deleteShowtime);
 router.get("/", getRooms);
 
 module.exports = router; // Fix: Use module.exports

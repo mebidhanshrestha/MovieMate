@@ -8,6 +8,7 @@ const getUserHistory = async (req, res) => {
 
     const bookings = await Booking.find({ user_id: userId })
       .populate('movie_id', 'title description duration image type')
+      .populate('room_id', 'name total_seats') // Add room population
       .populate({
         path: 'menu_items.menu_id', 
         select: 'name price image', 
@@ -43,7 +44,9 @@ const getUserHistory = async (req, res) => {
       return {
         ...booking,
         date: booking.date || new Date(), // Fallback to current date if null
-        menu_items: processedMenuItems
+        menu_items: processedMenuItems,
+        // Ensure seats is always an array
+        seats: Array.isArray(booking.seats) ? booking.seats : []
       };
     });
 
@@ -54,6 +57,8 @@ const getUserHistory = async (req, res) => {
         _id: booking._id,
         user_id: booking.user_id,
         movie_id: booking.movie_id,
+        room_id: booking.room_id, // Include room information
+        seats: booking.seats, // Include seat information
         menu_items: booking.menu_items || [],
         date: booking.date,
         time: booking.time_slot || '',
@@ -69,6 +74,8 @@ const getUserHistory = async (req, res) => {
         _id: booking._id,
         user_id: booking.user_id,
         movie_id: booking.movie_id,
+        room_id: booking.room_id, // Include room information
+        seats: booking.seats, // Include seat information
         menu_items: booking.menu_items,
         date: booking.date,
         time: booking.time_slot || '',
@@ -106,6 +113,7 @@ const getSalesDetails = async (req, res) => {
     
     const booking = await Booking.findById(salesId)
       .populate('movie_id')
+      .populate('room_id', 'name total_seats') // Add room population
       .populate({
         path: 'menu_items.menu_id', 
         select: 'name price image', 
@@ -126,6 +134,8 @@ const getSalesDetails = async (req, res) => {
       user_id: booking.user_id,
       username: '',
       movie_id: booking.movie_id,
+      room_id: booking.room_id, // Include room information
+      seats: Array.isArray(booking.seats) ? booking.seats : [], // Include seat information
       menu_items: (booking.menu_items || []).map(item => ({
         menu_id: {
           _id: item.menu_id?._id || 'unknown',
@@ -167,6 +177,7 @@ const getMovieHistory = async (req, res) => {
       user_id: userId
     })
       .populate('movie_id', 'title description duration image type')
+      .populate('room_id', 'name total_seats') // Add room population
       .sort({ date: -1 })
       .lean();
     
@@ -176,6 +187,8 @@ const getMovieHistory = async (req, res) => {
       user_id: booking.user_id,
       username: '',
       movie_id: booking.movie_id,
+      room_id: booking.room_id, // Include room information
+      seats: Array.isArray(booking.seats) ? booking.seats : [], // Include seat information
       menu_items: booking.menu_items || [],
       date: booking.date,
       time: booking.time_slot || '',
