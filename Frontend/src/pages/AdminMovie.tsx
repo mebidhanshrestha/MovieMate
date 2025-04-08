@@ -4,7 +4,6 @@ import axios from "axios";
 interface Movie {
   _id: string;
   title: string;
-  description: string;
   duration: string;
   start_date: string;
   end_date: string;
@@ -22,7 +21,6 @@ const AdminMovie = () => {
   
   const initialMovieState = {
     title: "",
-    description: "",
     duration: "",
     start_date: "",
     end_date: "",
@@ -65,7 +63,6 @@ const AdminMovie = () => {
       
       setMovie({
         title: movieData.title,
-        description: movieData.description,
         duration: movieData.duration,
         start_date: formatDate(movieData.start_date),
         end_date: formatDate(movieData.end_date),
@@ -105,7 +102,6 @@ const AdminMovie = () => {
     
     // Append form fields to formData
     formData.append("title", movie.title);
-    formData.append("description", movie.description);
     formData.append("duration", movie.duration);
     formData.append("start_date", movie.start_date);
     formData.append("end_date", movie.end_date);
@@ -256,17 +252,6 @@ const AdminMovie = () => {
               className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
-        </div>
-
-        <div>
-          <label className="block font-medium text-gray-700">Description:</label>
-          <textarea
-            name="description"
-            value={movie.description}
-            onChange={handleChange}
-            required
-            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          />
         </div>
 
         <div>

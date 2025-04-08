@@ -30,7 +30,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
     { path: "/dashboard/movie", label: "Manage Movies", icon: <Film className="w-5 h-5" /> },
     { path: "/dashboard/movie-allocate", label: "Movie Allocate", icon: <Calendar className="w-5 h-5" /> },
     { path: "/dashboard/menu", label: "Manage Menu", icon: <Coffee className="w-5 h-5" /> },
-    { path: "#", label: "Bookings", icon: <BookText className="w-5 h-5" /> },
+    { path: "/dashboard/bookings", label: "Bookings", icon: <BookText className="w-5 h-5" /> },
   ];
 
   return (

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface Movie {
   _id: string;
@@ -45,16 +47,18 @@ const AdminPanel = () => {
   
   // Fetch movies
  // Inside your useEffect for fetching movies, add this filter
-useEffect(() => {
+ useEffect(() => {
   axios.get("http://localhost:3001/api/movie/")
     .then((res) => {
-      // Filter out movies with "expired" status
       const activeMovies = res.data.movies.filter(
         (movie: Movie) => movie.status === "hosting"
       );
       setMovies(activeMovies);
     })
-    .catch((error) => console.error("Error fetching movies:", error));
+    .catch((error) => {
+      console.error("Error fetching movies:", error);
+      toast.error("Failed to load movies. Please refresh the page.");
+    });
 }, []);
 
   // Fetch rooms
@@ -91,7 +95,7 @@ useEffect(() => {
 
   const allocateMovie = async () => {
     if (!selectedMovie || !selectedRoom || showtimes.length === 0) {
-      alert("Please select a movie, a room, and add at least one showtime.");
+      toast.error("Please select a movie, a room, and add at least one showtime.");
       return;
     }
 
@@ -116,23 +120,21 @@ useEffect(() => {
         date: showtime.date,
         time_slots: showtime.times
       }));
-
       const response = await axios.post("http://localhost:3001/api/room/allocate-movie", {
         movie_id: selectedMovie,
         room_id: selectedRoom,
         schedule
       });
-
-      alert("Movie allocated successfully!");
+      toast.success("Movie allocated successfully!");
       console.log(response.data);
-      
-      // Refresh showtimes after allocation instead of reloading page
       fetchShowtimes(selectedRoom);
       setShowtimes([]);
-      
     } catch (error) {
       console.error("Error allocating movie:", error);
-      alert("Failed to allocate movie.");
+      const errorMessage = axios.isAxiosError(error) && error.response?.data?.message 
+        ? error.response.data.message 
+        : "Failed to allocate movie.";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -466,6 +468,7 @@ useEffect(() => {
       >
         {isLoading ? "Allocating..." : "Allocate Movie"}
       </button>
+      <ToastContainer position="top-right" />
     </div>
   );
 };

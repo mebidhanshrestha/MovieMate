@@ -8,6 +8,7 @@ const roomRoute = require('./routes/roomRoute');
 const menuRoutes = require('./routes/menuRoutes');
 const historyRoutes = require('./routes/historyRoute'); // Add this line
 const Movie = require('./models/Movie'); // Adjust path as needed
+const bookingRoutes = require('./routes/bookingRoutes'); 
 // npm install node-cron
 const cron = require('node-cron');
 
@@ -30,7 +31,8 @@ app.use('/uploads', express.static('uploads'));
 app.use("/api/movie", movieRoute);
 app.use("/api/room", roomRoute);
 app.use("/api/bookings", movieRoute);
-app.use("/api/history", historyRoutes); // Add this line
+app.use("/api/history", historyRoutes);
+app.use("/api/booking-management", bookingRoutes);
 
 // Routes placeholder
 app.get('/', (req, res) => {

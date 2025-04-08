@@ -3,8 +3,11 @@ const User = require('../models/User');
 
 const verifyAdmin = async (req, res, next) => {
   try {
-    const token = req.header('Authorization');
-    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    const authHeader = req.header('Authorization');
+    if (!authHeader) return res.status(401).json({ message: 'Unauthorized' });
+
+    // Remove 'Bearer ' prefix if it exists
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
@@ -16,7 +19,11 @@ const verifyAdmin = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Invalid token' });
+    console.error('Admin verification error:', error);
+    res.status(401).json({ 
+      message: 'Invalid token', 
+      error: error.message 
+    });
   }
 };
 

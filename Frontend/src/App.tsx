@@ -23,6 +23,7 @@ import MenuSelection from "./pages/MenuSelection";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import Profile from "./components/Profile"; // Import from components directory
 import History from "./pages/History"; // Import the History component
+import AdminBookings from "./pages/AdminBookings"; // Import the AdminBookings component
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -106,6 +107,15 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute role="admin">
                   <MovieAllocation />
+                </ProtectedRoute>
+              }
+            />
+            {/* Add the new AdminBookings route */}
+            <Route
+              path="bookings"
+              element={
+                <ProtectedRoute role="admin">
+                  <AdminBookings />
                 </ProtectedRoute>
               }
             />
