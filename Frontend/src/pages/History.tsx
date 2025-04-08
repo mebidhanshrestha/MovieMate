@@ -422,7 +422,7 @@ const History: React.FC = () => {
                         )}
                       </div>
                       <div className="mt-3 font-bold text-base sm:text-lg text-yellow-600">
-                        ${safeToFixed(sale.total_amount)}
+                        Rs. {safeToFixed(sale.total_amount)}
                       </div>
                       <button
                         onClick={() => handleViewDetails(sale._id)}
@@ -531,7 +531,7 @@ const History: React.FC = () => {
                       </div>
 
                       <div className="mt-3 font-bold text-base sm:text-lg text-yellow-600">
-                        ${safeToFixed(sale.total_amount)}
+                        Rs. {safeToFixed(sale.total_amount)}
                       </div>
 
                       <button
@@ -577,7 +577,7 @@ const History: React.FC = () => {
                 </div>
                 <div className="text-xs sm:text-sm font-medium text-gray-900">
                   <span className="font-semibold">Date:</span>{" "}
-                  {formatDate(selectedSale.date)} at {selectedSale.time}
+                  {formatDate(selectedSale.date)}
                 </div>
               </div>
 
@@ -662,7 +662,7 @@ const History: React.FC = () => {
                                 {item.menu_id?.name || "Unknown Item"}
                               </p>
                               <p className="text-xs text-gray-500">
-                                ${safeToFixed(item.menu_id?.price)} each
+                                Rs. {safeToFixed(item.menu_id?.price)} each
                               </p>
                             </div>
                           </div>
@@ -671,7 +671,7 @@ const History: React.FC = () => {
                               x{item.quantity || 0}
                             </span>
                             <span className="text-xs sm:text-sm font-medium text-gray-900">
-                              $
+                              Rs. 
                               {safeToFixed(
                                 (item.menu_id?.price || 0) *
                                   (item.quantity || 0)
@@ -688,7 +688,7 @@ const History: React.FC = () => {
                           Concessions Total:{" "}
                         </span>
                         <span className="text-sm sm:text-base font-bold text-gray-900">
-                          $
+                          Rs. 
                           {safeToFixed(
                             calculateConcessionsTotal(selectedSale.menu_items)
                           )}
@@ -714,7 +714,7 @@ const History: React.FC = () => {
                     <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-gray-500">Movie Ticket</span>
                       <span className="text-gray-900 font-medium">
-                        $
+                        Rs. 
                         {safeToFixed(
                           selectedSale.total_amount -
                             calculateConcessionsTotal(selectedSale.menu_items)
@@ -727,7 +727,7 @@ const History: React.FC = () => {
                       <div className="flex justify-between text-xs sm:text-sm">
                         <span className="text-gray-500">Concessions</span>
                         <span className="text-gray-900 font-medium">
-                          $
+                          Rs. 
                           {safeToFixed(
                             calculateConcessionsTotal(selectedSale.menu_items)
                           )}
@@ -737,7 +737,7 @@ const History: React.FC = () => {
                   <div className="flex justify-between text-sm sm:text-base font-bold pt-3 border-t border-gray-200">
                     <span className="text-gray-900">Total</span>
                     <span className="text-yellow-600">
-                      ${safeToFixed(selectedSale.total_amount)}
+                      Rs. {safeToFixed(selectedSale.total_amount)}
                     </span>
                   </div>
                 </div>

@@ -100,7 +100,7 @@ const SeatSelection = () => {
       {movie && (
         <div className="mb-4 text-center">
           <h3 className="text-xl font-bold">{movie.title}</h3>
-          <p className="text-gray-600">Ticket Price: ${getTicketPrice().toFixed(2)}</p>
+          <p className="text-gray-600">Ticket Price: Rs. {getTicketPrice().toFixed(2)}</p>
         </div>
       )}
       
@@ -182,7 +182,7 @@ const SeatSelection = () => {
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-600">Ticket price</p>
-            <p className="font-bold">${(getTicketPrice() * selectedSeats.length).toFixed(2)}</p>
+            <p className="font-bold">Rs. {(getTicketPrice() * selectedSeats.length).toFixed(2)}</p>
           </div>
         </div>
         

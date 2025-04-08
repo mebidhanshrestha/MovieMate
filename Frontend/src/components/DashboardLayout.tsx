@@ -9,7 +9,7 @@ import {
   LogOut, 
   Menu as MenuIcon,
   X,
-  Settings
+  BookText
 } from "lucide-react";
 
 const DashboardLayout: React.FC = (): JSX.Element => {
@@ -30,6 +30,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
     { path: "/dashboard/movie", label: "Manage Movies", icon: <Film className="w-5 h-5" /> },
     { path: "/dashboard/movie-allocate", label: "Movie Allocate", icon: <Calendar className="w-5 h-5" /> },
     { path: "/dashboard/menu", label: "Manage Menu", icon: <Coffee className="w-5 h-5" /> },
+    { path: "#", label: "Bookings", icon: <BookText className="w-5 h-5" /> },
   ];
 
   return (

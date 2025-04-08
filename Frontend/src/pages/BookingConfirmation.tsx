@@ -275,7 +275,7 @@ const BookingConfirmation: React.FC = () => {
                             </div>
                             <span className="text-gray-800">{item.name}</span>
                           </div>
-                          <span className="font-medium text-gray-800">${(item.price * (quantity as number)).toFixed(2)}</span>
+                          <span className="font-medium text-gray-800">Rs. {(item.price * (quantity as number)).toFixed(2)}</span>
                         </div>
                       );
                     })}
@@ -289,20 +289,20 @@ const BookingConfirmation: React.FC = () => {
           <div className="mt-8 rounded-xl p-4" style={{backgroundColor: "#fff5d7"}}>
             <div className="flex justify-between items-center mb-2 text-sm sm:text-base">
               <span className="text-gray-600">Ticket Price:</span>
-              <span className="font-medium">${getTicketPrice().toFixed(2)} × {selectedSeats?.length}</span>
+              <span className="font-medium">Rs. {getTicketPrice().toFixed(2)} × {selectedSeats?.length}</span>
             </div>
             <div className="flex justify-between items-center mb-2 text-sm sm:text-base">
               <span className="text-gray-600">Ticket Total:</span>
-              <span className="font-medium">${(getTicketPrice() * (selectedSeats?.length || 0)).toFixed(2)}</span>
+              <span className="font-medium">Rs. {(getTicketPrice() * (selectedSeats?.length || 0)).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center mb-2 text-sm sm:text-base">
               <span className="text-gray-600">Menu Items Total:</span>
-              <span className="font-medium">${calculateMenuItemsTotal().toFixed(2)}</span>
+              <span className="font-medium">Rs. {calculateMenuItemsTotal().toFixed(2)}</span>
             </div>
             <div className="h-px bg-gray-300 my-3"></div>
             <div className="flex justify-between items-center text-base sm:text-lg">
               <span className="font-bold">Total Price:</span>
-              <span className="font-bold" style={{color: "#e3b400"}}>${calculateTotalPrice().toFixed(2)}</span>
+              <span className="font-bold" style={{color: "#e3b400"}}>Rs. {calculateTotalPrice().toFixed(2)}</span>
             </div>
           </div>
         </div>

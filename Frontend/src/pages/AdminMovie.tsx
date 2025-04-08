@@ -244,7 +244,7 @@ const AdminMovie = () => {
             </select>
           </div>
           <div className="w-1/3">
-            <label className="block font-medium text-gray-700">Price ($):</label>
+            <label className="block font-medium text-gray-700">Price (Rs.):</label>
             <input
               type="number"
               name="price"
@@ -338,7 +338,7 @@ const AdminMovie = () => {
                     </td>
                     <td className="py-3 px-4 border-b">{movieItem.title}</td>
                     <td className="py-3 px-4 border-b">{movieItem.duration} min</td>
-                    <td className="py-3 px-4 border-b">${movieItem.price?.toFixed(2) || '0.00'}</td>
+                    <td className="py-3 px-4 border-b">Rs. {movieItem.price?.toFixed(2) || '0.00'}</td>
                     <td className="py-3 px-4 border-b">{formatDate(movieItem.start_date)}</td>
                     <td className="py-3 px-4 border-b">{formatDate(movieItem.end_date)}</td>
                     <td className="py-3 px-4 border-b">

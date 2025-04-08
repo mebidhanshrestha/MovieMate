@@ -152,7 +152,7 @@ const MenuSelection = () => {
                   {item.name}
                 </h3>
                 <p className="font-bold text-gray-800">
-                  ${item.price.toFixed(2)}
+                  Rs. {item.price.toFixed(2)}
                 </p>
               </div>
               {item.description && (
@@ -224,7 +224,7 @@ const MenuSelection = () => {
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-600">Total</p>
-            <p className="font-bold text-xl">${getTotalPrice().toFixed(2)}</p>
+            <p className="font-bold text-xl">Rs. {getTotalPrice().toFixed(2)}</p>
           </div>
         </div>
 
