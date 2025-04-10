@@ -6,10 +6,10 @@ const userRoutes = require('./routes/userRoute')
 const movieRoute = require('./routes/movieRoute');
 const roomRoute = require('./routes/roomRoute');
 const menuRoutes = require('./routes/menuRoutes');
-const historyRoutes = require('./routes/historyRoute'); // Add this line
-const Movie = require('./models/Movie'); // Adjust path as needed
+const historyRoutes = require('./routes/historyRoute');
+const Movie = require('./models/Movie');
 const bookingRoutes = require('./routes/bookingRoutes'); 
-// npm install node-cron
+const esewaRoutes = require('./routes/esewaRoutes');
 const cron = require('node-cron');
 
 // Load environment variables
@@ -22,26 +22,33 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
-app.use(express.urlencoded({ extended: true })); // For URL-encoded data
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.urlencoded({ extended: true }));
 
+// Static file serving
+app.use('/uploads', express.static('uploads'));
+
+// API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/menu', menuRoutes);
-app.use('/uploads', express.static('uploads'));
 app.use("/api/movie", movieRoute);
 app.use("/api/room", roomRoute);
-app.use("/api/bookings", movieRoute);
 app.use("/api/history", historyRoutes);
+// FIXED: This was wrong - it was using movieRoute for bookings
+app.use("/api/bookings", bookingRoutes); // Changed from movieRoute to bookingRoutes
 app.use("/api/booking-management", bookingRoutes);
+app.use('/api/esewa', esewaRoutes);
 
-// Routes placeholder
+// Base route
 app.get('/', (req, res) => {
   res.send('Movie Booking API is running...');
 });
 
-
-
-// Run every day at midnight
+// Cron job for updating expired movies
 cron.schedule('5 21 * * *', async () => {
   try {
     const currentDate = new Date();
@@ -58,7 +65,7 @@ cron.schedule('5 21 * * *', async () => {
   timezone: "Asia/Kathmandu"
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

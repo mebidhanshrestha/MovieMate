@@ -20,7 +20,7 @@ interface BookingMenuItem {
 interface Booking {
   _id: string;
   user_id: string;
-  movie_id: string;
+  movie_id: string | { _id: string };
   room_id: string | { _id: string };
   date: string;
   time_slot: string;
@@ -148,11 +148,8 @@ function AdminBookings() {
     ),
   ].sort();
 
-  // Filter bookings based on applied criteria
-  // Filter bookings based on applied criteria
   const filteredBookings = bookings.filter((booking) => {
-    // Log the booking and applied filters for debugging
-    console.log("Booking:", {
+    console.log("Booking Details:", {
       id: booking._id,
       movieId: booking.movie_id,
       movieTitle: booking.movieData?.title,
@@ -168,16 +165,16 @@ function AdminBookings() {
 
     // Check movie filter
     if (appliedFilters.movie) {
-      // Compare movie ID or title
+      // Determine booking movie ID
       const bookingMovieId =
-        typeof booking.movie_id === "object"
-          ? booking.movie_id._id
+        typeof booking.movie_id === "object" && booking.movie_id !== null
+          ? (booking.movie_id as { _id: string })._id
           : booking.movie_id;
 
       console.log(
-        "Comparing movie:",
-        `Booking movie ID: ${bookingMovieId}, 
-      Filter movie ID: ${appliedFilters.movie}`
+        "Movie Comparison:",
+        `Booking Movie ID: ${bookingMovieId}, 
+         Filter Movie ID: ${appliedFilters.movie}`
       );
 
       if (bookingMovieId !== appliedFilters.movie) {
@@ -189,9 +186,9 @@ function AdminBookings() {
     if (appliedFilters.date) {
       const bookingDate = new Date(booking.date).toISOString().split("T")[0];
       console.log(
-        "Comparing date:",
-        `Booking date: ${bookingDate}, 
-      Filter date: ${appliedFilters.date}`
+        "Date Comparison:",
+        `Booking Date: ${bookingDate}, 
+         Filter Date: ${appliedFilters.date}`
       );
       if (bookingDate !== appliedFilters.date) {
         return false;
@@ -200,16 +197,16 @@ function AdminBookings() {
 
     // Check room filter
     if (appliedFilters.room) {
-      // Compare room ID
+      // Determine booking room ID
       const bookingRoomId =
-        typeof booking.room_id === "object"
+        typeof booking.room_id === "object" && booking.room_id !== null
           ? (booking.room_id as { _id: string })._id
           : booking.room_id;
 
       console.log(
-        "Comparing room:",
-        `Booking room ID: ${bookingRoomId}, 
-      Filter room ID: ${appliedFilters.room}`
+        "Room Comparison:",
+        `Booking Room ID: ${bookingRoomId}, 
+         Filter Room ID: ${appliedFilters.room}`
       );
 
       if (bookingRoomId !== appliedFilters.room) {
@@ -229,27 +226,23 @@ function AdminBookings() {
     }));
   };
 
-  // Apply filters
   const applyFilters = () => {
-    // Find the selected movie's ID
     const selectedMovie = movies.find(
       (movie) => movie.title === filterCriteria.movie
+    );
+    const selectedRoom = rooms.find(
+      (room) => room.name === filterCriteria.room
     );
 
     const newFilters = {
       movie: selectedMovie ? selectedMovie._id : "",
       date: filterCriteria.date,
-      room: filterCriteria.room,
+      room: selectedRoom ? selectedRoom._id : "",
     };
 
-    console.log("Applying New Filters:", newFilters);
+    console.log("Applying Precise Filters:", newFilters);
     setAppliedFilters(newFilters);
   };
-
-  // In the render method, add a console log for filtered bookings
-  useEffect(() => {
-    console.log("Filtered Bookings:", filteredBookings);
-  }, [appliedFilters, bookings]);
 
   // Reset filters
   const resetFilters = () => {

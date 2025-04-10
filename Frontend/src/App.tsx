@@ -24,6 +24,8 @@ import BookingConfirmation from "./pages/BookingConfirmation";
 import Profile from "./components/Profile"; // Import from components directory
 import History from "./pages/History"; // Import the History component
 import AdminBookings from "./pages/AdminBookings"; // Import the AdminBookings component
+import EsewaSuccess from "./pages/EsewaSuccess"; // Import the EsewaSuccess component
+import EsewaFailure from "./pages/EsewaFailure"; // Import the EsewaFailure component
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -60,21 +62,28 @@ const App: React.FC = () => {
           />
           <Route path="/menu" element={<MenuSelection />} />
           <Route path="/confirmation" element={<BookingConfirmation />} />
-          
+
+          {/* eSewa payment handling routes */}
+          <Route path="/esewa-success" element={<EsewaSuccess />} />
+          <Route path="/esewa-failure" element={<EsewaFailure />} />
+
           {/* Protected Profile route */}
-          <Route path="/profile" element={
-            isAuthenticated() ? <Profile /> : <Navigate to="/login" />
-          } />
-          
+          <Route
+            path="/profile"
+            element={isAuthenticated() ? <Profile /> : <Navigate to="/login" />}
+          />
+
           {/* Protected Settings route (currently using Profile) */}
-          <Route path="/settings" element={
-            isAuthenticated() ? <Profile /> : <Navigate to="/login" />
-          } />
-          
+          <Route
+            path="/settings"
+            element={isAuthenticated() ? <Profile /> : <Navigate to="/login" />}
+          />
+
           {/* Protected History route */}
-          <Route path="/history" element={
-            isAuthenticated() ? <History /> : <Navigate to="/login" />
-          } />
+          <Route
+            path="/history"
+            element={isAuthenticated() ? <History /> : <Navigate to="/login" />}
+          />
         </Route>
 
         <Route element={<PrivateRoute />}>

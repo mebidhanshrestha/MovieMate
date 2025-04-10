@@ -31,7 +31,6 @@ const bookingSchema = new mongoose.Schema({
       type: Number, 
       default: 1,
       min: 1 
-
     }
   }],
   total_price: { 
@@ -41,12 +40,22 @@ const bookingSchema = new mongoose.Schema({
   },
   payment_method: { 
     type: String, 
+    enum: ['card', 'cash', 'esewa'],  // Added 'esewa' as a payment option
     default: 'card' 
   },
   status: { 
     type: String, 
     enum: ['confirmed', 'cancelled'], 
     default: 'confirmed' 
+  },
+  // Add these fields for eSewa payment tracking
+  transaction_id: {
+    type: String,
+    default: null
+  },
+  esewa_token: {
+    type: String,
+    default: null
   }
 }, { timestamps: true });
 

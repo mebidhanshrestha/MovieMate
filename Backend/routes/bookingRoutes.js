@@ -8,6 +8,7 @@ const {
   getUserBookings
 } = require('../controllers/bookingController');
 const { verifyAdmin, verifyToken } = require('../middleware/authMiddleware');
+const { bookSeats } = require('../controllers/movieController');
 
 // Routes that require admin privileges
 router.get('/all', verifyAdmin, getAllBookings);
@@ -17,5 +18,5 @@ router.patch('/:id/status', verifyAdmin, updateBookingStatus);
 
 // Routes for regular users
 router.get('/user/my-bookings', verifyToken, getUserBookings);
-
+router.post('/booking/movie-book', bookSeats );
 module.exports = router;

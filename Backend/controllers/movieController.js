@@ -210,7 +210,9 @@ const bookSeats = async (req, res) => {
       seats, 
       menu_items = [], 
       payment_method = 'card', 
-      total_price 
+      total_price,
+      transaction_id, // Add this to store eSewa transaction ID
+      esewa_token   // Add this to store eSewa token
     } = req.body;
 
     // Ensure date is a valid Date object
@@ -234,7 +236,8 @@ const bookSeats = async (req, res) => {
       quantity: item.quantity
     }));
 
-    const booking = new Booking({ 
+    // Create booking with payment information
+    const bookingData = { 
       user_id, 
       movie_id, 
       room_id, 
@@ -244,8 +247,19 @@ const bookSeats = async (req, res) => {
       menu_items: preparedMenuItems,
       payment_method,
       total_price,
-      status: "confirmed" 
-    });
+      status: "confirmed" ,
+      transaction_id,
+      esewa_token
+    };
+
+    // Add payment-specific fields based on payment method
+    if (payment_method === 'esewa') {
+      bookingData.transaction_id = transaction_id;
+      bookingData.esewa_token = esewa_token;
+      // In production, you would verify the eSewa token here
+    }
+
+    const booking = new Booking(bookingData);
     await booking.save();
 
     res.status(201).json({ 
@@ -268,5 +282,5 @@ export {
   deleteMovie, 
   getShowtimes, 
   getAvailableSeats, 
-  bookSeats 
+  bookSeats,
 };
