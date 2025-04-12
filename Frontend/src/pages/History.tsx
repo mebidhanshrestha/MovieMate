@@ -393,10 +393,6 @@ const History: React.FC = () => {
                         {sale.movie_id ? sale.movie_id.title : "Movie Ticket"}
                       </h3>
                       <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                        <div>
-                          <span className="font-medium">Movie Date:</span>{" "}
-                          {formatDate(sale.date)}
-                        </div>
                   
                         {/* Add seat information */}
                         <div>
@@ -516,10 +512,6 @@ const History: React.FC = () => {
                       </div>
 
                       <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                        <div>
-                          <span className="font-medium">Date:</span>{" "}
-                          {formatDate(sale.date)}
-                        </div>
                         <div>
                           <span className="font-medium">Payment:</span>{" "}
                           {sale.payment_method}
