@@ -10,6 +10,7 @@ const historyRoutes = require('./routes/historyRoute');
 const Movie = require('./models/Movie');
 const bookingRoutes = require('./routes/bookingRoutes'); 
 const esewaRoutes = require('./routes/esewaRoutes');
+const loyaltypointRoutes = require('./routes/loyaltypointRoutes');
 const cron = require('node-cron');
 
 // Load environment variables
@@ -38,10 +39,10 @@ app.use('/api/menu', menuRoutes);
 app.use("/api/movie", movieRoute);
 app.use("/api/room", roomRoute);
 app.use("/api/history", historyRoutes);
-// FIXED: This was wrong - it was using movieRoute for bookings
-app.use("/api/bookings", bookingRoutes); // Changed from movieRoute to bookingRoutes
+app.use("/api/bookings", bookingRoutes);
 app.use("/api/booking-management", bookingRoutes);
 app.use('/api/esewa', esewaRoutes);
+app.use('/api/loyalty-points', loyaltypointRoutes);
 
 // Base route
 app.get('/', (req, res) => {

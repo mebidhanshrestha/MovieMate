@@ -180,3 +180,44 @@ export const deleteShowtime = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+// Get a room by ID
+export const getRoomById = async (req, res) => {
+  try {
+    const { room_id } = req.body; // Get room_id from request body instead of URL params
+    
+    console.log("Fetching room with ID from body:", room_id);
+    
+    if (!room_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Room ID is required in request body"
+      });
+    }
+    
+    // Find the room by ID
+    const room = await Room.findById(room_id);
+    
+    // If room not found, return 404
+    if (!room) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Room not found" 
+      });
+    }
+    
+    // Return the room data
+    res.status(200).json({ 
+      success: true, 
+      room
+    });
+  } catch (error) {
+    console.error("Error fetching room by ID:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error",
+      error: error.message 
+    });
+  }
+};
