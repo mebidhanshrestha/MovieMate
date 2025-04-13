@@ -11,6 +11,7 @@ const Movie = require('./models/Movie');
 const bookingRoutes = require('./routes/bookingRoutes'); 
 const esewaRoutes = require('./routes/esewaRoutes');
 const loyaltypointRoutes = require('./routes/loyaltypointRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const cron = require('node-cron');
 
 // Load environment variables
@@ -43,6 +44,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/booking-management", bookingRoutes);
 app.use('/api/esewa', esewaRoutes);
 app.use('/api/loyalty-points', loyaltypointRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Base route
 app.get('/', (req, res) => {

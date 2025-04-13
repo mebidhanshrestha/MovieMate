@@ -6,6 +6,7 @@ import fs from 'fs';
 import Movie from '../models/Movie.js';
 import Room from '../models/Room.js';
 import Booking from '../models/Booking.js';  
+import Notification from '../models/Notification.js';
 
 // Set up Multer storage
 const __filename = fileURLToPath(import.meta.url);
@@ -262,6 +263,34 @@ const bookSeats = async (req, res) => {
     const booking = new Booking(bookingData);
     await booking.save();
 
+    // Create simple notification with only movie title and amount
+    try {
+      // Get movie title for notification
+      const movie = await Movie.findById(movie_id).select('title');
+      const movieTitle = movie ? movie.title : 'Unknown Movie';
+      
+      // Create simplified notification with just the essential details
+      const notification = new Notification({
+        type: 'payment',
+        message: `Payment received, Rs.${total_price} received for ${movieTitle}`,
+        read: false,
+        details: {
+          amount: total_price,
+          movie_title: movieTitle,
+          // Include these but they won't be displayed in UI
+          booking_id: booking._id,
+          user_id: user_id,
+          payment_method: payment_method
+        }
+      });
+      
+      await notification.save();
+      console.log(`Admin notification created for payment: ${notification._id}`);
+    } catch (notificationError) {
+      // Log error but don't fail the booking process
+      console.error("Error creating admin notification:", notificationError);
+    }
+
     res.status(201).json({ 
       success: true, 
       message: "Booking confirmed", 
@@ -272,6 +301,12 @@ const bookSeats = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
+
+// Make sure to import the Notification model at the top of your file:
+// const Notification = require('../models/Notification');
+
+// Make sure to import the Notification model at the top of your file:
+// const Notification = require('../models/Notification');
 
 export { 
   addMovie, 
