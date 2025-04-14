@@ -17,13 +17,22 @@ interface BookingMenuItem {
   menuDetails?: MenuItem;
 }
 
+interface Showtime {
+  _id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  movie_id?: string;
+  seats?: any[];
+}
+
 interface Booking {
   _id: string;
   user_id: string;
-  movie_id: string | { _id: string };
-  room_id: string | { _id: string };
+  movie_id: string | { _id: string; title?: string };
+  room_id: string | { _id: string; name?: string };
   date: string;
-  time_slot: string;
+  time_slot: string | Showtime;
   seats: string[];
   menu_items: BookingMenuItem[];
   total_price: number;
@@ -39,7 +48,10 @@ interface Booking {
   };
   roomData?: {
     name: string;
+    _id: string;
   };
+  showtimeDetails?: Showtime;
+  fullRoomData?: any;
 }
 
 interface User {
@@ -59,15 +71,6 @@ interface Room {
   name: string;
   capacity: number;
   showtimes: Showtime[];
-}
-
-interface Showtime {
-  _id: string;
-  movie_id: string;
-  date: string;
-  start_time: string;
-  end_time: string;
-  seats: Seat[];
 }
 
 interface Seat {
@@ -93,6 +96,28 @@ authAxios.interceptors.request.use(
   }
 );
 
+const formatDate = (dateString?: string) => {
+  if (!dateString) return "N/A";
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      console.log("Invalid date:", dateString);
+      return "N/A";
+    }
+
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch (error) {
+    console.error("Error formatting date:", error, "Input:", dateString);
+    return "N/A";
+  }
+};
+
 function AdminBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -102,31 +127,72 @@ function AdminBookings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // New state for filter criteria
   const [filterCriteria, setFilterCriteria] = useState({
     movie: "",
     date: "",
     room: "",
   });
 
-  // State to track applied filters
   const [appliedFilters, setAppliedFilters] = useState({
     movie: "",
     date: "",
     room: "",
   });
 
-  // Selected booking for detailed view
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [bookingDetails, setBookingDetails] = useState<Booking | null>(null);
   const [showSeatMap, setShowSeatMap] = useState(false);
 
-  // In the useEffect for fetching movies
+  const fetchRoomDetails = async (booking: Booking): Promise<Booking> => {
+    try {
+      const roomId = typeof booking.room_id === 'object' ? booking.room_id._id : booking.room_id;
+      
+      if (!roomId) {
+        console.error('No room ID found for booking:', booking._id);
+        return booking;
+      }
+      
+      const roomResponse = await axios.post(
+        "http://localhost:3001/api/room/therater",
+        { room_id: roomId }
+      );
+      
+      if (roomResponse.data?.success && roomResponse.data.room) {
+        const roomData = roomResponse.data.room;
+        
+        let showtimeDetails: Showtime | null = null;
+        if (roomData.showtimes && roomData.showtimes.length > 0) {
+          if (typeof booking.time_slot === 'object') {
+            showtimeDetails = booking.time_slot;
+          } else {
+            showtimeDetails = roomData.showtimes.find(
+              (st: Showtime) => st._id === booking.time_slot
+            ) || null;
+          }
+        }
+        
+        return {
+          ...booking,
+          roomData: {
+            name: roomData.name,
+            _id: roomData._id
+          },
+          fullRoomData: roomData,
+          showtimeDetails: showtimeDetails || booking.showtimeDetails,
+          time_slot: showtimeDetails || booking.time_slot
+        };
+      }
+      return booking;
+    } catch (error) {
+      console.error("Error fetching room details:", error);
+      return booking;
+    }
+  };
+
   useEffect(() => {
     const fetchMovies = async () => {
       try {
         const response = await axios.get("http://localhost:3001/api/movie/");
-        // Filter movies with "hosting" status
         const activeMovies = response.data.movies.filter(
           (movie: Movie) => movie.status === "hosting"
         );
@@ -139,75 +205,34 @@ function AdminBookings() {
     fetchMovies();
   }, []);
 
-  // Get unique dates from bookings (all dates)
-  const uniqueDates = [
-    ...new Set(
-      bookings.map(
-        (booking) => new Date(booking.date).toISOString().split("T")[0]
-      )
-    ),
-  ].sort();
-
   const filteredBookings = bookings.filter((booking) => {
-    console.log("Booking Details:", {
-      id: booking._id,
-      movieId: booking.movie_id,
-      movieTitle: booking.movieData?.title,
-      date: booking.date,
-      roomId: booking.room_id,
-    });
-    console.log("Applied Filters:", appliedFilters);
-
-    // If no filters are applied, show all bookings
     if (!appliedFilters.movie && !appliedFilters.date && !appliedFilters.room) {
       return true;
     }
 
-    // Check movie filter
     if (appliedFilters.movie) {
-      // Determine booking movie ID
       const bookingMovieId =
         typeof booking.movie_id === "object" && booking.movie_id !== null
-          ? (booking.movie_id as { _id: string })._id
+          ? booking.movie_id._id
           : booking.movie_id;
-
-      console.log(
-        "Movie Comparison:",
-        `Booking Movie ID: ${bookingMovieId}, 
-         Filter Movie ID: ${appliedFilters.movie}`
-      );
 
       if (bookingMovieId !== appliedFilters.movie) {
         return false;
       }
     }
 
-    // Check date filter
     if (appliedFilters.date) {
       const bookingDate = new Date(booking.date).toISOString().split("T")[0];
-      console.log(
-        "Date Comparison:",
-        `Booking Date: ${bookingDate}, 
-         Filter Date: ${appliedFilters.date}`
-      );
       if (bookingDate !== appliedFilters.date) {
         return false;
       }
     }
 
-    // Check room filter
     if (appliedFilters.room) {
-      // Determine booking room ID
       const bookingRoomId =
         typeof booking.room_id === "object" && booking.room_id !== null
-          ? (booking.room_id as { _id: string })._id
+          ? booking.room_id._id
           : booking.room_id;
-
-      console.log(
-        "Room Comparison:",
-        `Booking Room ID: ${bookingRoomId}, 
-         Filter Room ID: ${appliedFilters.room}`
-      );
 
       if (bookingRoomId !== appliedFilters.room) {
         return false;
@@ -217,7 +242,6 @@ function AdminBookings() {
     return true;
   });
 
-  // Handle filter input changes
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilterCriteria((prev) => ({
@@ -227,24 +251,16 @@ function AdminBookings() {
   };
 
   const applyFilters = () => {
-    const selectedMovie = movies.find(
-      (movie) => movie.title === filterCriteria.movie
-    );
-    const selectedRoom = rooms.find(
-      (room) => room.name === filterCriteria.room
-    );
-
-    const newFilters = {
-      movie: selectedMovie ? selectedMovie._id : "",
-      date: filterCriteria.date,
-      room: selectedRoom ? selectedRoom._id : "",
-    };
-
-    console.log("Applying Precise Filters:", newFilters);
+    const newFilters = { ...filterCriteria };
+    
+    if (filterCriteria.movie) {
+      const selectedMovie = movies.find(movie => movie.title === filterCriteria.movie);
+      newFilters.movie = selectedMovie ? selectedMovie._id : "";
+    }
+    
     setAppliedFilters(newFilters);
   };
 
-  // Reset filters
   const resetFilters = () => {
     setFilterCriteria({
       movie: "",
@@ -258,7 +274,6 @@ function AdminBookings() {
     });
   };
 
-  // Load all necessary data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -266,9 +281,7 @@ function AdminBookings() {
 
       try {
         const token = localStorage.getItem("token");
-        console.log("Using token:", token ? "exists" : "missing");
 
-        // Fetch all required data
         const [bookingsRes, menuItemsRes, usersRes, moviesRes, roomsRes] =
           await Promise.all([
             authAxios.get("http://localhost:3001/api/booking-management/all"),
@@ -277,16 +290,29 @@ function AdminBookings() {
             authAxios.get("http://localhost:3001/api/movie"),
             authAxios.get("http://localhost:3001/api/room"),
           ]);
+        
+        const roomsData = roomsRes.data.rooms || [];
+        setRooms(roomsData);
+        
+        const roomMap: {[key: string]: string} = {};
+        roomsData.forEach((room: Room) => {
+          roomMap[room._id] = room.name;
+        });
 
-        // Add more robust error checking
-        if (!bookingsRes.data || !bookingsRes.data.bookings) {
-          throw new Error("Invalid bookings data structure");
-        }
+        const bookingsWithData = await Promise.all(
+          bookingsRes.data.bookings.map(async (booking: Booking) => {
+            let roomName = "Unknown Room";
+            const roomId = typeof booking.room_id === 'object' ? booking.room_id._id : booking.room_id;
+            
+            if (roomMap[roomId]) {
+              roomName = roomMap[roomId];
+            } else if (typeof booking.room_id === 'object' && booking.room_id?.name) {
+              roomName = booking.room_id.name;
+            } else if (booking.roomData?.name) {
+              roomName = booking.roomData.name;
+            }
 
-        // Prepare bookings with additional data
-        const bookingsWithData = bookingsRes.data.bookings.map(
-          (booking: Booking) => {
-            return {
+            const enrichedBooking = {
               ...booking,
               userData: booking.userData || {
                 name: "Unknown",
@@ -295,30 +321,29 @@ function AdminBookings() {
               movieData: booking.movieData || {
                 title: "Unknown Movie",
               },
-              roomData: booking.roomData || {
-                name: "Unknown Room",
+              roomData: {
+                name: roomName,
+                _id: roomId
               },
               menu_items: booking.menu_items.map((item) => ({
                 ...item,
                 menuDetails: item.menuDetails || null,
               })),
             };
-          }
+
+            return await fetchRoomDetails(enrichedBooking);
+          })
         );
 
         setBookings(bookingsWithData);
         setMenuItems(menuItemsRes.data || []);
         setUsers(usersRes.data.users || []);
         setMovies(moviesRes.data.movies || []);
-        setRooms(roomsRes.data.rooms || []);
         setLoading(false);
       } catch (err: any) {
         console.error("Full error object:", err);
 
         if (err.response) {
-          console.error("Response error data:", err.response.data);
-          console.error("Response error status:", err.response.status);
-
           if (err.response.status === 401) {
             localStorage.removeItem("token");
             setError("Authentication failed. Please log in again.");
@@ -338,36 +363,127 @@ function AdminBookings() {
     fetchData();
   }, []);
 
-  // View booking details
   const handleViewDetails = async (booking: Booking) => {
     setSelectedBooking(booking);
-
+    setLoading(true);
+    
     try {
-      setBookingDetails(booking);
+      const enrichedBooking = await fetchRoomDetails(booking);
+      setBookingDetails(enrichedBooking);
     } catch (err) {
-      console.error("Error fetching booking details:", err);
+      console.error("Error preparing booking details:", err);
       setError("Failed to load booking details.");
+      setBookingDetails(booking);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Function to toggle seat map view
   const toggleSeatMap = () => {
     setShowSeatMap(!showSeatMap);
   };
 
-  // Render the seat map
+  const renderBookingRow = (booking: Booking) => {
+    let displayDate = "N/A";
+    let displayTime = "N/A";
+    let roomName = "Unknown Room";
+
+    if (booking.roomData?.name) {
+      roomName = booking.roomData.name;
+    } else if (typeof booking.room_id === 'object' && booking.room_id.name) {
+      roomName = booking.room_id.name;
+    }
+
+    if (booking.showtimeDetails) {
+      displayDate = new Date(booking.showtimeDetails.date).toLocaleDateString("en-US", {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+      displayTime = `${booking.showtimeDetails.start_time} - ${booking.showtimeDetails.end_time}`;
+    } else if (typeof booking.time_slot === 'object') {
+      displayDate = new Date(booking.time_slot.date).toLocaleDateString("en-US", {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+      displayTime = `${booking.time_slot.start_time} - ${booking.time_slot.end_time}`;
+    } else if (booking.date) {
+      displayDate = new Date(booking.date).toLocaleDateString("en-US", {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+      displayTime = booking.time_slot || "N/A";
+    }
+
+    return (
+      <tr key={booking._id} className="hover:bg-gray-50 transition-colors duration-150">
+        <td className="py-3 px-4">
+          <p className="font-medium">{booking.userData?.name || "Unknown"}</p>
+          <p className="text-sm text-gray-500">{booking.userData?.email}</p>
+        </td>
+        <td className="py-3 px-4">{booking.movieData?.title || "Unknown"}</td>
+        <td className="py-3 px-4 font-medium">{roomName}</td>
+        <td className="py-3 px-4">
+          <p>{displayDate}</p>
+          <p className="text-sm text-gray-500">{displayTime}</p>
+        </td>
+        <td className="py-3 px-4">
+          <div className="flex flex-wrap gap-1">
+            {booking.seats.slice(0, 3).map((seat) => (
+              <span key={seat} className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">
+                {seat}
+              </span>
+            ))}
+            {booking.seats.length > 3 && (
+              <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">
+                +{booking.seats.length - 3}
+              </span>
+            )}
+          </div>
+        </td>
+        <td className="py-3 px-4 font-medium">Rs. {booking.total_price.toFixed(2)}</td>
+        <td className="py-3 px-4">
+          <button
+            onClick={() => handleViewDetails(booking)}
+            className="bg-primary text-white px-3 py-1 rounded hover:bg-primary-100 transition-colors duration-200 flex items-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 mr-1"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+              <path
+                fillRule="evenodd"
+                d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Details
+          </button>
+        </td>
+      </tr>
+    );
+  };
+
   const renderSeatMap = () => {
     if (!bookingDetails) return null;
 
-    // Get the showtime for this booking
-    const room = rooms.find((r) => r._id === bookingDetails.room_id);
+    const roomId = typeof bookingDetails.room_id === "object" 
+      ? bookingDetails.room_id._id 
+      : bookingDetails.room_id;
+      
+    const room = rooms.find((r) => r._id === roomId);
     if (!room) return <p>Room information not available</p>;
 
     const showtime = room.showtimes.find(
-      (s) => s._id === bookingDetails.time_slot
+      (s) => s._id === (typeof bookingDetails.time_slot === 'string' ? bookingDetails.time_slot : bookingDetails.time_slot?._id)
     );
+    
     if (!showtime) {
-      // If we don't have the actual showtime data, render a simplified view
       const rows = ["A", "B", "C", "D", "E"];
       const columns = Array.from({ length: 10 }, (_, i) => i + 1);
 
@@ -416,8 +532,6 @@ function AdminBookings() {
       );
     }
 
-    // Render the actual seat map based on the showtime data
-    // This will be more accurate but requires the actual showtime data
     const bookedSeats = bookingDetails.seats;
 
     return (
@@ -472,9 +586,8 @@ function AdminBookings() {
     );
   };
 
-  // Render food items
   const renderFoodItems = () => {
-    if (!bookingDetails || bookingDetails.menu_items.length === 0) {
+    if (!bookingDetails || !bookingDetails.menu_items || bookingDetails.menu_items.length === 0) {
       return <p className="mt-4">No food items purchased with this booking.</p>;
     }
 
@@ -497,11 +610,13 @@ function AdminBookings() {
                   <td className="py-2 px-4 border-b flex items-center">
                     {item.menuDetails ? (
                       <>
-                        <img
-                          src={`http://localhost:3001${item.menuDetails.image}`}
-                          alt={item.menuDetails.name}
-                          className="w-12 h-12 object-cover rounded mr-2"
-                        />
+                        {item.menuDetails.image && (
+                          <img
+                            src={`http://localhost:3001${item.menuDetails.image}`}
+                            alt={item.menuDetails.name}
+                            className="w-12 h-12 object-cover rounded mr-2"
+                          />
+                        )}
                         <div>
                           <p className="font-medium">{item.menuDetails.name}</p>
                           <p className="text-sm text-gray-500">
@@ -532,10 +647,7 @@ function AdminBookings() {
                 </tr>
               ))}
               <tr className="bg-gray-50">
-                <td
-                  colSpan={3}
-                  className="py-2 px-4 border-b font-bold text-right"
-                >
+                <td colSpan={3} className="py-2 px-4 border-b font-bold text-right">
                   Total:
                 </td>
                 <td className="py-2 px-4 border-b text-right font-bold">
@@ -587,9 +699,7 @@ function AdminBookings() {
         <h3 className="text-xl font-bold mb-4 text-primary">Filter Bookings</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block font-medium text-gray-700 mb-1">
-              Movie:
-            </label>
+            <label className="block font-medium text-gray-700 mb-1">Movie:</label>
             <select
               name="movie"
               value={filterCriteria.movie}
@@ -608,9 +718,7 @@ function AdminBookings() {
           </div>
 
           <div>
-            <label className="block font-medium text-gray-700 mb-1">
-              Date:
-            </label>
+            <label className="block font-medium text-gray-700 mb-1">Date:</label>
             <select
               name="date"
               value={filterCriteria.date}
@@ -618,7 +726,7 @@ function AdminBookings() {
               className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">All Dates</option>
-              {uniqueDates.map((date) => (
+              {[...new Set(bookings.map(b => new Date(b.date).toISOString().split("T")[0]))].sort().map((date) => (
                 <option key={date} value={date}>
                   {new Date(date).toLocaleDateString()}
                 </option>
@@ -627,9 +735,7 @@ function AdminBookings() {
           </div>
 
           <div>
-            <label className="block font-medium text-gray-700 mb-1">
-              Room:
-            </label>
+            <label className="block font-medium text-gray-700 mb-1">Room:</label>
             <select
               name="room"
               value={filterCriteria.room}
@@ -638,7 +744,7 @@ function AdminBookings() {
             >
               <option value="">All Rooms</option>
               {rooms.map((room) => (
-                <option key={room._id} value={room._id}>
+                <option key={room._id} value={room.name}>
                   {room.name}
                 </option>
               ))}
@@ -709,15 +815,37 @@ function AdminBookings() {
 
               <div className="mb-4">
                 <p className="font-medium text-gray-700">Room:</p>
-                <p>{bookingDetails.roomData?.name || "Unknown"}</p>
+                <p className="font-medium text-gray-800">
+                  {bookingDetails.roomData?.name || 
+                   (typeof bookingDetails.room_id === 'object' ? bookingDetails.room_id.name : "Unknown Room")}
+                </p>
               </div>
             </div>
 
             <div>
               <div className="mb-4">
                 <p className="font-medium text-gray-700">Date & Time:</p>
-                <p>{new Date(bookingDetails.date).toLocaleDateString()}</p>
-                <p>{bookingDetails.time_slot}</p>
+                {bookingDetails.showtimeDetails ? (
+                  <>
+                    <p className="text-gray-800">
+                      {formatDate(bookingDetails.showtimeDetails.date)}
+                    </p>
+                    <p className="text-gray-700 font-medium">
+                      {bookingDetails.showtimeDetails.start_time} - {bookingDetails.showtimeDetails.end_time}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-800">
+                      {formatDate(bookingDetails.date)}
+                    </p>
+                    <p className="text-gray-700 font-medium">
+                      {typeof bookingDetails.time_slot === 'object' 
+                        ? `${bookingDetails.time_slot.start_time} - ${bookingDetails.time_slot.end_time}`
+                        : bookingDetails.time_slot || "N/A"}
+                    </p>
+                  </>
+                )}
               </div>
 
               <div className="mb-4">
@@ -735,7 +863,7 @@ function AdminBookings() {
               </div>
 
               <div className="mb-4">
-                <p className="font-medium text-gray-700">Payment Details:</p>
+                <p className="font-medium text-gray-700">Payment Information:</p>
                 <p>Method: {bookingDetails.payment_method}</p>
                 <p>Total: Rs. {bookingDetails.total_price.toFixed(2)}</p>
               </div>
@@ -760,8 +888,6 @@ function AdminBookings() {
           </div>
 
           {showSeatMap && renderSeatMap()}
-
-          {/* Food Items */}
           {renderFoodItems()}
         </div>
       )}
@@ -802,72 +928,7 @@ function AdminBookings() {
                 </td>
               </tr>
             ) : (
-              filteredBookings.map((booking) => (
-                <tr
-                  key={booking._id}
-                  className="hover:bg-gray-50 transition-colors duration-150"
-                >
-                  <td className="py-3 px-4">
-                    <p className="font-medium">
-                      {booking.userData?.name || "Unknown"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {booking.userData?.email}
-                    </p>
-                  </td>
-                  <td className="py-3 px-4">
-                    {booking.movieData?.title || "Unknown"}
-                  </td>
-                  <td className="py-3 px-4">
-                    {booking.roomData?.name || "Unknown Room"}
-                  </td>
-                  <td className="py-3 px-4">
-                    <p>{new Date(booking.date).toLocaleDateString()}</p>
-                    <p className="text-sm text-gray-500">{booking.time_slot}</p>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex flex-wrap gap-1">
-                      {booking.seats.slice(0, 3).map((seat) => (
-                        <span
-                          key={seat}
-                          className="bg-gray-100 px-1.5 py-0.5 rounded text-xs"
-                        >
-                          {seat}
-                        </span>
-                      ))}
-                      {booking.seats.length > 3 && (
-                        <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">
-                          +{booking.seats.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 font-medium">
-                    Rs. {booking.total_price.toFixed(2)}
-                  </td>
-                  <td className="py-3 px-4">
-                    <button
-                      onClick={() => handleViewDetails(booking)}
-                      className="bg-primary text-white px-3 py-1 rounded hover:bg-primary-100 transition-colors duration-200 flex items-center"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-1"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                        <path
-                          fillRule="evenodd"
-                          d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      Details
-                    </button>
-                  </td>
-                </tr>
-              ))
+              filteredBookings.map(booking => renderBookingRow(booking))
             )}
           </tbody>
         </table>
