@@ -1,6 +1,7 @@
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode"; // Import jwt-decode as a named import
 import logo from "../assets/images/moviemate-logo.svg";
 import {
   LayoutDashboard,
@@ -12,7 +13,7 @@ import {
   X,
   BookText,
   Bell,
-  Users,  
+  Users,
 } from "lucide-react";
 
 interface Notification {
@@ -27,6 +28,11 @@ interface Notification {
   };
 }
 
+interface JwtPayload {
+  id: string;
+  role: string;
+}
+
 const DashboardLayout: React.FC = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,6 +41,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState("Admin User"); // State for dynamic username
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = (): void => {
@@ -45,6 +52,41 @@ const DashboardLayout: React.FC = (): JSX.Element => {
   const isActive = (path: string) => location.pathname === path;
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
+
+  // Fetch user data for username
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.warn("No authentication token found");
+          return;
+        }
+
+        // Decode JWT to get user ID
+        const decoded: JwtPayload = jwtDecode(token);
+        const userId = decoded.id;
+
+        // Fetch user data using /api/users/:id
+        const response = await axios.get(`http://localhost:3001/api/users/${userId}`, {
+          headers: {
+            Authorization: token,
+          },
+        });
+
+        if (response.data && response.data.name) {
+          setUsername(response.data.name);
+        } else {
+          console.warn("No user name found in response");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        // Keep default "Admin User" if fetch fails
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   // Fetch notifications from API
   useEffect(() => {
@@ -425,9 +467,9 @@ const DashboardLayout: React.FC = (): JSX.Element => {
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center space-x-2">
                 <div className="w-10 h-10 rounded-full bg-gray-700 text-[#FBC700] flex items-center justify-center font-semibold">
-                  AM
+                  {username.charAt(0).toUpperCase()}{username.charAt(1).toUpperCase() || ""}
                 </div>
-                <span className="hidden sm:inline font-medium">Admin User</span>
+                <span className="hidden sm:inline font-medium">{username}</span>
               </div>
               
               {/* Notification Bell */}

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 // Define interfaces for our data types
 interface MenuItem {
@@ -84,10 +86,7 @@ authAxios.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
-      config.headers["Authorization"] = `Bearer ${token.replace(
-        /^Bearer\s*/,
-        ""
-      )}`;
+      config.headers["Authorization"] = `Bearer ${token.replace(/^Bearer\s*/, "")}`;
     }
     return config;
   },
@@ -118,6 +117,14 @@ const formatDate = (dateString?: string) => {
   }
 };
 
+// Helper function to format a Date object to "YYYY-MM-DD" in local timezone
+const formatLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 function AdminBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -129,14 +136,16 @@ function AdminBookings() {
 
   const [filterCriteria, setFilterCriteria] = useState({
     movie: "",
-    date: "",
+    date: null as Date | null,
     room: "",
+    time: "",
   });
 
   const [appliedFilters, setAppliedFilters] = useState({
     movie: "",
     date: "",
     room: "",
+    time: "",
   });
 
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -206,44 +215,58 @@ function AdminBookings() {
   }, []);
 
   const filteredBookings = bookings.filter((booking) => {
-    if (!appliedFilters.movie && !appliedFilters.date && !appliedFilters.room) {
-      return true;
-    }
+    let matches = true;
 
     if (appliedFilters.movie) {
-      const bookingMovieId =
-        typeof booking.movie_id === "object" && booking.movie_id !== null
-          ? booking.movie_id._id
-          : booking.movie_id;
-
-      if (bookingMovieId !== appliedFilters.movie) {
-        return false;
-      }
+      const bookingMovieId = typeof booking.movie_id === "object" && booking.movie_id !== null
+        ? booking.movie_id._id
+        : booking.movie_id;
+      matches = matches && bookingMovieId === appliedFilters.movie;
     }
 
     if (appliedFilters.date) {
-      const bookingDate = new Date(booking.date).toISOString().split("T")[0];
-      if (bookingDate !== appliedFilters.date) {
+      // Determine the booking date to compare with
+      let bookingDate: Date | null = null;
+      if (booking.showtimeDetails && booking.showtimeDetails.date) {
+        bookingDate = new Date(booking.showtimeDetails.date);
+      } else if (typeof booking.time_slot === 'object' && booking.time_slot.date) {
+        bookingDate = new Date(booking.time_slot.date);
+      } else if (booking.date) {
+        bookingDate = new Date(booking.date);
+      }
+
+      if (!bookingDate || isNaN(bookingDate.getTime())) {
+        console.warn(`Invalid booking date for booking ID ${booking._id}:`, booking);
         return false;
       }
+
+      const bookingDateStr = formatLocalDate(bookingDate);
+      console.log(`Comparing filter date: ${appliedFilters.date} with booking date: ${bookingDateStr}`);
+      matches = matches && bookingDateStr === appliedFilters.date;
     }
 
     if (appliedFilters.room) {
-      const bookingRoomId =
-        typeof booking.room_id === "object" && booking.room_id !== null
-          ? booking.room_id._id
-          : booking.room_id;
-
-      if (bookingRoomId !== appliedFilters.room) {
-        return false;
-      }
+      const bookingRoomId = typeof booking.room_id === "object" && booking.room_id !== null
+        ? booking.room_id._id
+        : booking.room_id;
+      matches = matches && bookingRoomId === appliedFilters.room;
     }
 
-    return true;
+    if (appliedFilters.time) {
+      let bookingTime = "N/A";
+      if (booking.showtimeDetails && booking.showtimeDetails.start_time) {
+        bookingTime = booking.showtimeDetails.start_time;
+      } else if (typeof booking.time_slot === 'object' && booking.time_slot.start_time) {
+        bookingTime = booking.time_slot.start_time;
+      }
+      matches = matches && bookingTime === appliedFilters.time;
+    }
+
+    return matches;
   });
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleFilterChange = (name: string, value: any) => {
+    console.log(`Filter changed: ${name} =`, value);
     setFilterCriteria((prev) => ({
       ...prev,
       [name]: value,
@@ -252,25 +275,45 @@ function AdminBookings() {
 
   const applyFilters = () => {
     const newFilters = { ...filterCriteria };
-    
+
     if (filterCriteria.movie) {
-      const selectedMovie = movies.find(movie => movie.title === filterCriteria.movie);
+      const selectedMovie = movies.find(movie => movie._id === filterCriteria.movie);
       newFilters.movie = selectedMovie ? selectedMovie._id : "";
     }
-    
+
+    if (filterCriteria.date) {
+      const filterDateStr = formatLocalDate(filterCriteria.date);
+      console.log("Applying date filter:", filterDateStr);
+      newFilters.date = filterDateStr;
+    } else {
+      newFilters.date = "";
+    }
+
+    if (filterCriteria.room) {
+      const selectedRoom = rooms.find(room => room._id === filterCriteria.room);
+      newFilters.room = selectedRoom ? selectedRoom._id : "";
+    }
+
+    if (filterCriteria.time) {
+      newFilters.time = filterCriteria.time;
+    }
+
+    console.log("Applied filters:", newFilters);
     setAppliedFilters(newFilters);
   };
 
   const resetFilters = () => {
     setFilterCriteria({
       movie: "",
-      date: "",
+      date: null,
       room: "",
+      time: "",
     });
     setAppliedFilters({
       movie: "",
       date: "",
       room: "",
+      time: "",
     });
   };
 
@@ -294,7 +337,7 @@ function AdminBookings() {
         const roomsData = roomsRes.data.rooms || [];
         setRooms(roomsData);
         
-        const roomMap: {[key: string]: string} = {};
+        const roomMap: { [key: string]: string } = {};
         roomsData.forEach((room: Room) => {
           roomMap[room._id] = room.name;
         });
@@ -335,6 +378,7 @@ function AdminBookings() {
           })
         );
 
+        console.log("Fetched bookings:", bookingsWithData);
         setBookings(bookingsWithData);
         setMenuItems(menuItemsRes.data || []);
         setUsers(usersRes.data.users || []);
@@ -394,27 +438,27 @@ function AdminBookings() {
       roomName = booking.room_id.name;
     }
 
-    if (booking.showtimeDetails) {
+    if (booking.showtimeDetails && booking.showtimeDetails.date) {
       displayDate = new Date(booking.showtimeDetails.date).toLocaleDateString("en-US", {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       });
       displayTime = `${booking.showtimeDetails.start_time} - ${booking.showtimeDetails.end_time}`;
-    } else if (typeof booking.time_slot === 'object') {
+    } else if (typeof booking.time_slot === 'object' && booking.time_slot.date) {
       displayDate = new Date(booking.time_slot.date).toLocaleDateString("en-US", {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       });
-      displayTime = `${booking.time_slot.start_time} - ${booking.time_slot.end_time}`;
+      displayTime = `${booking.time_slot.start_time || "N/A"} - ${booking.time_slot.end_time || "N/A"}`;
     } else if (booking.date) {
       displayDate = new Date(booking.date).toLocaleDateString("en-US", {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       });
-      displayTime = booking.time_slot || "N/A";
+      displayTime = typeof booking.time_slot === 'string' ? booking.time_slot : "N/A";
     }
 
     return (
@@ -639,9 +683,7 @@ function AdminBookings() {
                   </td>
                   <td className="py-2 px-4 border-b text-right">
                     {item.menuDetails
-                      ? `Rs. ${(item.menuDetails.price * item.quantity).toFixed(
-                          2
-                        )}`
+                      ? `Rs. ${(item.menuDetails.price * item.quantity).toFixed(2)}`
                       : "N/A"}
                   </td>
                 </tr>
@@ -697,20 +739,20 @@ function AdminBookings() {
       {/* Filters */}
       <div className="mb-8 p-6 bg-white shadow-lg rounded-xl border-t-4 border-primary">
         <h3 className="text-xl font-bold mb-4 text-primary">Filter Bookings</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <label className="block font-medium text-gray-700 mb-1">Movie:</label>
             <select
               name="movie"
               value={filterCriteria.movie}
-              onChange={handleFilterChange}
+              onChange={(e) => handleFilterChange("movie", e.target.value)}
               className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">All Movies</option>
               {movies
                 .filter((movie) => movie.status === "hosting")
                 .map((movie) => (
-                  <option key={movie._id} value={movie.title}>
+                  <option key={movie._id} value={movie._id}>
                     {movie.title}
                   </option>
                 ))}
@@ -719,19 +761,13 @@ function AdminBookings() {
 
           <div>
             <label className="block font-medium text-gray-700 mb-1">Date:</label>
-            <select
-              name="date"
-              value={filterCriteria.date}
-              onChange={handleFilterChange}
+            <DatePicker
+              selected={filterCriteria.date}
+              onChange={(date: Date | null) => handleFilterChange("date", date)}
               className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">All Dates</option>
-              {[...new Set(bookings.map(b => new Date(b.date).toISOString().split("T")[0]))].sort().map((date) => (
-                <option key={date} value={date}>
-                  {new Date(date).toLocaleDateString()}
-                </option>
-              ))}
-            </select>
+              placeholderText="Select Date"
+              dateFormat="yyyy-MM-dd"
+            />
           </div>
 
           <div>
@@ -739,24 +775,45 @@ function AdminBookings() {
             <select
               name="room"
               value={filterCriteria.room}
-              onChange={handleFilterChange}
+              onChange={(e) => handleFilterChange("room", e.target.value)}
               className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">All Rooms</option>
               {rooms.map((room) => (
-                <option key={room._id} value={room.name}>
+                <option key={room._id} value={room._id}>
                   {room.name}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="flex items-end space-x-2">
+          <div>
+            <label className="block font-medium text-gray-700 mb-1">Time:</label>
+            <select
+              name="time"
+              value={filterCriteria.time}
+              onChange={(e) => handleFilterChange("time", e.target.value)}
+              className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">All Times</option>
+              {[...new Set(bookings.map(b => {
+                if (b.showtimeDetails && b.showtimeDetails.start_time) return b.showtimeDetails.start_time;
+                if (typeof b.time_slot === 'object' && b.time_slot.start_time) return b.time_slot.start_time;
+                return "N/A";
+              }))].filter(time => time !== "N/A" && time).sort().map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-end mb-1 space-x-2">
             <button
               onClick={applyFilters}
               className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-100 transition-colors duration-200"
             >
-              Apply Filters
+              Apply
             </button>
             <button
               onClick={resetFilters}
@@ -841,7 +898,7 @@ function AdminBookings() {
                     </p>
                     <p className="text-gray-700 font-medium">
                       {typeof bookingDetails.time_slot === 'object' 
-                        ? `${bookingDetails.time_slot.start_time} - ${bookingDetails.time_slot.end_time}`
+                        ? `${bookingDetails.time_slot.start_time || "N/A"} - ${bookingDetails.time_slot.end_time || "N/A"}`
                         : bookingDetails.time_slot || "N/A"}
                     </p>
                   </>
@@ -907,7 +964,7 @@ function AdminBookings() {
                 Room
               </th>
               <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
+                Date & Time
               </th>
               <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Seats

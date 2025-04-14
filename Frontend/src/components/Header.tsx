@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Menu, X, User, Search, Bell, Award } from "lucide-react";
+import { Menu, X, User, Award } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import logo from "../assets/images/moviemate-logo.svg";
@@ -105,7 +105,7 @@ const Header = () => {
   };
 
   const goToProfile = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation(); // Prevent the dropdown from closing
+    event.stopPropagation();
     setIsProfileDropdownOpen(false);
     navigate("/profile");
   };
@@ -119,7 +119,19 @@ const Header = () => {
   const isActive = (path: string) =>
     location.pathname === path ? "text-primary" : "";
 
-  // Function to render loyalty points badge - helps maintain consistent styling
+  // Function to get user initials
+  const getUserInitials = (name: string) => {
+    const names = name.split(" ");
+    let initials = names[0].substring(0, 1).toUpperCase();
+    
+    if (names.length > 1) {
+      initials += names[names.length - 1].substring(0, 1).toUpperCase();
+    }
+    
+    return initials;
+  };
+
+  // Function to render loyalty points badge
   const renderLoyaltyBadge = (size: "desktop" | "tablet" | "mobile") => {
     if (!isLoggedIn || loyaltyPoints === null) return null;
 
@@ -217,19 +229,6 @@ const Header = () => {
           {/* Desktop Right Section */}
           <div className="hidden lg:flex items-center gap-x-4">
             <div className="flex items-center gap-x-3">
-              <button
-                className="text-gray-500 hover:text-gray-700 transition-colors duration-200 p-2 rounded-full hover:bg-gray-100"
-                aria-label="Search"
-              >
-                <Search className="h-5 w-5 text-gray-500" />
-              </button>
-              <button
-                className="text-gray-500 hover:text-gray-700 transition-colors duration-200 p-2 rounded-full hover:bg-gray-100"
-                aria-label="Notifications"
-              >
-                <Bell className="h-5 w-5 text-gray-500" />
-              </button>
-
               {/* Loyalty Points Display for Desktop */}
               {renderLoyaltyBadge("desktop")}
             </div>
@@ -238,11 +237,11 @@ const Header = () => {
               <div className="relative" ref={desktopDropdownRef}>
                 <button
                   onClick={toggleProfileDropdown}
-                  className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors duration-200"
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-white font-medium hover:bg-amber-500 transition-colors duration-200"
                   aria-expanded={isProfileDropdownOpen}
                   aria-label="User menu"
                 >
-                  <User className="h-5 w-5 text-gray-600" />
+                  {userData?.name ? getUserInitials(userData.name) : "U"}
                 </button>
                 {isProfileDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100">
@@ -291,19 +290,6 @@ const Header = () => {
 
           {/* Tablet Right Section */}
           <div className="hidden sm:flex lg:hidden items-center gap-x-2 md:gap-x-3">
-            <button
-              className="text-gray-500 hover:text-gray-700 transition-colors duration-200 p-1.5 rounded-full hover:bg-gray-100"
-              aria-label="Search"
-            >
-              <Search className="h-5 w-5 text-gray-500" />
-            </button>
-            <button
-              className="text-gray-500 hover:text-gray-700 transition-colors duration-200 p-1.5 rounded-full hover:bg-gray-100"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5 text-gray-500" />
-            </button>
-
             {/* Loyalty Points Display for Tablet */}
             {renderLoyaltyBadge("tablet")}
 
@@ -311,11 +297,11 @@ const Header = () => {
               <div className="relative">
                 <button
                   onClick={toggleProfileDropdown}
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors duration-200"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white font-medium hover:bg-amber-500 transition-colors duration-200"
                   aria-expanded={isProfileDropdownOpen}
                   aria-label="User menu"
                 >
-                  <User className="h-4 w-4 text-gray-600" />
+                  {userData?.name ? getUserInitials(userData.name) : "U"}
                 </button>
                 {isProfileDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100">
@@ -364,13 +350,6 @@ const Header = () => {
 
           {/* Mobile Menu Controls */}
           <div className="flex sm:hidden items-center gap-x-1">
-            <button
-              className="text-gray-500 hover:text-gray-700 transition-colors duration-200 p-1"
-              aria-label="Search"
-            >
-              <Search className="h-4 w-4 text-gray-500" />
-            </button>
-
             {/* Only show loyalty points badge if there's enough space */}
             {renderLoyaltyBadge("mobile")}
 
@@ -378,11 +357,11 @@ const Header = () => {
               <div className="relative" ref={mobileDropdownRef}>
                 <button
                   onClick={toggleProfileDropdown}
-                  className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors duration-200 ml-1"
+                  className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-white text-xs font-medium hover:bg-amber-500 transition-colors duration-200 ml-1"
                   aria-expanded={isProfileDropdownOpen}
                   aria-label="User menu"
                 >
-                  <User className="h-3.5 w-3.5 text-gray-600" />
+                  {userData?.name ? getUserInitials(userData.name) : "U"}
                 </button>
                 {isProfileDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100">
