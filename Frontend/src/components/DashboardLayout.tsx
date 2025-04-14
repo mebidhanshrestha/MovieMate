@@ -12,6 +12,7 @@ import {
   X,
   BookText,
   Bell,
+  Users,  
 } from "lucide-react";
 
 interface Notification {
@@ -86,7 +87,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
         {
           _id: "1",
           type: "payment",
-          message: "Payment received, Rs.1500 received for Avengers movie",
+          message: "",
           read: false,
           created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
           details: {
@@ -97,7 +98,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
         {
           _id: "2",
           type: "payment",
-          message: "Payment received, Rs.850 received for Inception movie",
+          message: "",
           read: false,
           created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
           details: {
@@ -108,7 +109,7 @@ const DashboardLayout: React.FC = (): JSX.Element => {
         {
           _id: "3",
           type: "payment",
-          message: "Payment received, Rs.1200 received for Batman movie",
+          message: "",
           read: true,
           created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
           details: {
@@ -243,6 +244,11 @@ const DashboardLayout: React.FC = (): JSX.Element => {
       path: "/dashboard",
       label: "Dashboard",
       icon: <LayoutDashboard className="w-5 h-5" />,
+    },
+    {
+      path: "/dashboard/users",
+      label: "Manage Users",
+      icon: <Users className="w-5 h-5" />,
     },
     {
       path: "/dashboard/movie",

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { Search } from "lucide-react";
 
 interface Movie {
   _id: string;
@@ -10,14 +11,16 @@ interface Movie {
   status: string;
   type: string;
   image: string;
-  price: number; // Added price field
+  price: number;
 }
 
 const AdminMovie = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   
   const initialMovieState = {
     title: "",
@@ -27,7 +30,7 @@ const AdminMovie = () => {
     status: "hosting",
     type: "current",
     image: null as File | null,
-    price: 0, // Default price value
+    price: 0,
   };
   
   const [movie, setMovie] = useState(initialMovieState);
@@ -37,7 +40,9 @@ const AdminMovie = () => {
     try {
       setLoading(true);
       const response = await axios.get("http://localhost:3001/api/movie");
-      setMovies(response.data.movies || []);
+      const moviesData = response.data.movies || [];
+      setMovies(moviesData);
+      setFilteredMovies(moviesData);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching movies:", error);
@@ -48,6 +53,21 @@ const AdminMovie = () => {
   useEffect(() => {
     fetchMovies();
   }, []);
+
+  // Filter movies when search term changes
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredMovies(movies);
+    } else {
+      const lowercasedSearch = searchTerm.toLowerCase();
+      const filtered = movies.filter(movie => 
+        movie.title.toLowerCase().includes(lowercasedSearch) || 
+        movie.type.toLowerCase().includes(lowercasedSearch) ||
+        movie.status.toLowerCase().includes(lowercasedSearch)
+      );
+      setFilteredMovies(filtered);
+    }
+  }, [searchTerm, movies]);
 
   // Fetch a single movie for editing
   const fetchMovieById = async (id: string) => {
@@ -107,7 +127,7 @@ const AdminMovie = () => {
     formData.append("end_date", movie.end_date);
     formData.append("status", movie.status);
     formData.append("type", movie.type);
-    formData.append("price", movie.price.toString()); // Add price to form data
+    formData.append("price", movie.price.toString());
     
     // Only append image if a new one is selected
     if (movie.image) {
@@ -154,6 +174,10 @@ const AdminMovie = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString();
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
   return (
@@ -287,14 +311,32 @@ const AdminMovie = () => {
         </div>
       </form>
 
-      {/* Movie List */}
+      {/* Movie List with Search */}
       <div className="mt-10">
-        <h2 className="text-2xl font-bold mb-6 text-primary">Movie List</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-primary">Movie List</h2>
+          
+          {/* Search Box */}
+          <div className="relative w-64">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search movies..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="pl-10 w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
         
         {loading ? (
           <p className="text-center py-4">Loading...</p>
-        ) : movies.length === 0 ? (
-          <p className="text-center py-4">No movies found</p>
+        ) : filteredMovies.length === 0 ? (
+          <p className="text-center py-4">
+            {searchTerm ? "No movies found matching your search" : "No movies found"}
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200">
@@ -312,7 +354,7 @@ const AdminMovie = () => {
                 </tr>
               </thead>
               <tbody>
-                {movies.map((movieItem) => (
+                {filteredMovies.map((movieItem) => (
                   <tr key={movieItem._id}>
                     <td className="py-3 px-4 border-b">
                       <img 
