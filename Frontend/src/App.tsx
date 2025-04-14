@@ -27,6 +27,8 @@ import AdminBookings from "./pages/AdminBookings"; // Import the AdminBookings c
 import EsewaSuccess from "./pages/EsewaSuccess"; // Import the EsewaSuccess component
 import EsewaFailure from "./pages/EsewaFailure"; // Import the EsewaFailure component
 import AdminUserManagement from "./pages/AdminUserManagement"; // Import the AdminUserManagement component
+import AdminBanners from "./pages/AdminBanners"; // Import the AdminBanners component
+import BannerManagement from "./pages/BannerManagement";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -135,6 +137,15 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute role="admin">
                   <AdminUserManagement />
+                </ProtectedRoute>
+              }
+            />
+            {/* Add the new AdminBanners route */}
+            <Route
+              path="manage-banner"
+              element={
+                <ProtectedRoute role="admin">
+                  <BannerManagement />
                 </ProtectedRoute>
               }
             />

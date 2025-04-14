@@ -3,15 +3,17 @@ import { Link } from "react-router-dom";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import axios from "axios";
-import Burger from "../assets/images/burger-banner.png";
-import Menu from "../assets/images/menu-banner.png";
-import Chicken from "../assets/images/chicken-banner.png";
 
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import { Autoplay, Pagination } from "swiper/modules";
+
+// Fallback images in case API fails
+import Burger from "../assets/images/burger-banner.png";
+import Menu from "../assets/images/menu-banner.png";
+import Chicken from "../assets/images/chicken-banner.png";
 
 // Define TypeScript interfaces
 interface Movie {
@@ -26,12 +28,13 @@ interface Movie {
   image: string;
 }
 
-interface FoodItem {
-  name: string;
-  weight: string;
-  calories: string;
-  price: string;
+interface Banner {
+  _id: string;
+  title: string;
+  altText: string;
   image: string;
+  active: boolean;
+  order: number;
 }
 
 type TabType = "current" | "upcoming";
@@ -41,38 +44,37 @@ export default function Home(): JSX.Element {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [currentMovies, setCurrentMovies] = useState<Movie[]>([]);
   const [upcomingMovies, setUpcomingMovies] = useState<Movie[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [bannersLoading, setBannersLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [bannersError, setBannersError] = useState<string | null>(null);
   
   const movieScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Fetch movies from the API
-  // useEffect(() => {
-  //   const fetchMovies = async () => {
-  //     try {
-  //       setLoading(true);
-  //       const response = await axios.get("http://localhost:3001/api/movie");
-  //       const allMovies = response.data.movies || [];
+  // Fetch banners
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        setBannersLoading(true);
+        console.log("Fetching banners from API...");
+        const response = await axios.get("http://localhost:3001/api/banner/active");
+        console.log("Banner response:", response.data);
+        const activeBanners = response.data || [];
         
-  //       setMovies(allMovies);
-        
-  //       // Filter current and upcoming movies
-  //       const current = allMovies.filter((movie: Movie) => movie.type === "current");
-  //       const upcoming = allMovies.filter((movie: Movie) => movie.type === "upcoming");
-        
-  //       setCurrentMovies(current);
-  //       setUpcomingMovies(upcoming);
-  //       setLoading(false);
-  //     } catch (err) {
-  //       console.error("Error fetching movies:", err);
-  //       setError("Failed to load movies");
-  //       setLoading(false);
-  //     }
-  //   };
+        setBanners(activeBanners);
+        setBannersLoading(false);
+      } catch (err) {
+        console.error("Error fetching banners:", err);
+        setBannersError("Failed to load banners");
+        setBannersLoading(false);
+      }
+    };
 
-  //   fetchMovies();
-  // }, []);
+    fetchBanners();
+  }, []);
 
+  // Fetch movies
   useEffect(() => {
     const fetchMovies = async () => {
       try {
@@ -133,6 +135,46 @@ export default function Home(): JSX.Element {
     return `${mins}m`;
   };
 
+  // Generate fallback banners if API fails or no banners are available
+  const getFallbackBanners = () => [
+    { _id: "fallback1", title: "Burger Special", altText: "Delicious burger meal with fries", image: Burger, active: true, order: 0 },
+    { _id: "fallback2", title: "Menu Options", altText: "Menu with various food options", image: Menu, active: true, order: 1 },
+    { _id: "fallback3", title: "Chicken Platter", altText: "Grilled chicken platter with sides", image: Chicken, active: true, order: 2 }
+  ];
+
+  // Determine which banners to display
+  const displayBanners = banners.length > 0 ? banners : getFallbackBanners();
+
+  // Debug: Log banner paths
+  useEffect(() => {
+    if (banners.length > 0) {
+      console.log("Banner image paths:", banners.map(b => b.image));
+    }
+  }, [banners]);
+
+  const getBannerImageUrl = (banner: Banner) => {
+    // If it's a fallback image (from imports)
+    if (typeof banner.image === 'string' && !banner.image.startsWith('/')) {
+      return banner.image;
+    }
+    
+    // For uploaded images from the server
+    const path = banner.image;
+    
+    // If path already starts with /uploads, don't add it again
+    if (path.startsWith('/uploads/')) {
+      return `http://localhost:3001${path}`;
+    } 
+    // If path starts with /banners (new format), add the /uploads prefix
+    else if (path.startsWith('/banners/')) {
+      return `http://localhost:3001/uploads${path}`;
+    }
+    // Fallback for any other format
+    else {
+      return `http://localhost:3001/uploads${path.startsWith('/') ? path : `/${path}`}`;
+    }
+  };
+
   return (
     <>
       <div className="container mx-auto">
@@ -151,30 +193,40 @@ export default function Home(): JSX.Element {
             modules={[Autoplay, Pagination]}
             className="mySwiper"
           >
-            <SwiperSlide>
-              <img
-                src={Burger}
-                alt="Delicious burger meal with fries"
-                className="w-full object-cover rounded-[16px] transition-transform duration-300"
-                loading="lazy"
-              />
-            </SwiperSlide>
-            <SwiperSlide>
-              <img
-                src={Menu}
-                alt="Menu with various food options"
-                className="w-full object-cover rounded-[16px] transition-transform duration-300"
-                loading="lazy"
-              />
-            </SwiperSlide>
-            <SwiperSlide>
-              <img
-                src={Chicken}
-                alt="Grilled chicken platter with sides"
-                className="w-full object-cover rounded-[16px] transition-transform duration-300"
-                loading="lazy"
-              />
-            </SwiperSlide>
+            {bannersLoading ? (
+              <SwiperSlide>
+                <div className="w-full h-[300px] flex justify-center items-center bg-gray-200 rounded-[16px]">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              </SwiperSlide>
+            ) : bannersError ? (
+              <SwiperSlide>
+                <div className="w-full h-[300px] flex justify-center items-center bg-gray-200 rounded-[16px]">
+                  <p className="text-red-500">{bannersError}</p>
+                </div>
+              </SwiperSlide>
+            ) : (
+              displayBanners.map((banner) => (
+                <SwiperSlide key={banner._id}>
+                  <img
+                    src={getBannerImageUrl(banner)}
+                    alt={banner.altText}
+                    className="w-full h-[300px] object-cover rounded-[16px] transition-transform duration-300"
+                    loading="lazy"
+                    onError={(e) => {
+                      console.error('Image failed to load:', getBannerImageUrl(banner));
+                      // Fallback to a placeholder if the image fails to load
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x400?text=Image+Not+Found';
+                    }}
+                  />
+                  {banner.title && (
+                    <div className="absolute bottom-0 left-0 w-full p-4 bg-black bg-opacity-50 text-white rounded-b-[16px]">
+                      <h3 className="text-lg font-semibold">{banner.title}</h3>
+                    </div>
+                  )}
+                </SwiperSlide>
+              ))
+            )}
           </Swiper>
         </div>
 

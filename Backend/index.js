@@ -2,7 +2,9 @@ const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const cors = require('cors');
-const userRoutes = require('./routes/userRoute')
+const path = require('path');
+const fs = require('fs');
+const userRoutes = require('./routes/userRoute');
 const movieRoute = require('./routes/movieRoute');
 const roomRoute = require('./routes/roomRoute');
 const menuRoutes = require('./routes/menuRoutes');
@@ -12,10 +14,14 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const esewaRoutes = require('./routes/esewaRoutes');
 const loyaltypointRoutes = require('./routes/loyaltypointRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const bannerRoutes = require('./routes/bannerRoutes');
 const cron = require('node-cron');
 
 // Load environment variables
 dotenv.config();
+
+// Debug: Log working directory
+console.log('Server starting in directory:', process.cwd());
 
 // Connect to MongoDB
 connectDB();
@@ -31,7 +37,8 @@ app.use(cors({
 }));
 app.use(express.urlencoded({ extended: true }));
 
-// Static file serving
+// Static file serving - debug
+console.log('Uploads path:', path.join(process.cwd(), 'uploads'));
 app.use('/uploads', express.static('uploads'));
 
 // API Routes
@@ -45,10 +52,48 @@ app.use("/api/booking-management", bookingRoutes);
 app.use('/api/esewa', esewaRoutes);
 app.use('/api/loyalty-points', loyaltypointRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/banner', bannerRoutes);
 
 // Base route
 app.get('/', (req, res) => {
   res.send('Movie Booking API is running...');
+});
+
+// Test route for static files
+app.get('/test-uploads', (req, res) => {
+  try {
+    const uploadsPath = path.join(process.cwd(), 'uploads');
+    let files = [];
+    
+    // Function to recursively get files
+    const getFiles = (dir) => {
+      const items = fs.readdirSync(dir);
+      for (const item of items) {
+        const fullPath = path.join(dir, item);
+        const stat = fs.statSync(fullPath);
+        if (stat.isDirectory()) {
+          getFiles(fullPath);
+        } else {
+          files.push(fullPath.replace(process.cwd(), ''));
+        }
+      }
+    };
+    
+    if (fs.existsSync(uploadsPath)) {
+      getFiles(uploadsPath);
+      res.json({ 
+        message: 'Uploads directory contents',
+        files: files
+      });
+    } else {
+      res.json({ 
+        message: 'Uploads directory does not exist',
+        path: uploadsPath
+      });
+    }
+  } catch (error) {
+    res.json({ error: error.message });
+  }
 });
 
 // Cron job for updating expired movies

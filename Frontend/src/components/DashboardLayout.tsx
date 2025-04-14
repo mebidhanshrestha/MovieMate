@@ -312,6 +312,11 @@ const DashboardLayout: React.FC = (): JSX.Element => {
       label: "Bookings",
       icon: <BookText className="w-5 h-5" />,
     },
+    {
+      path: "/dashboard/manage-banner",
+      label: "Manage Event",
+      icon: <BookText className="w-5 h-5" />,
+    },
   ];
 
   return (
