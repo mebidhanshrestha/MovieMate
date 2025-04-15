@@ -15,6 +15,7 @@ const esewaRoutes = require('./routes/esewaRoutes');
 const loyaltypointRoutes = require('./routes/loyaltypointRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
+const alertRoutes = require('./routes/alertRoutes');
 const cron = require('node-cron');
 
 // Load environment variables
@@ -32,8 +33,9 @@ const app = express();
 app.use(express.json());
 app.use(cors({
   origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Added PATCH method
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // Added to support credentials
 }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -53,6 +55,7 @@ app.use('/api/esewa', esewaRoutes);
 app.use('/api/loyalty-points', loyaltypointRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/banner', bannerRoutes);
+app.use('/api/alerts', alertRoutes);
 
 // Base route
 app.get('/', (req, res) => {

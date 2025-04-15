@@ -3,6 +3,7 @@ import { Menu, X, User, Award } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import logo from "../assets/images/moviemate-logo.svg";
+import AlertDisplay from "./AlertDisplay";
 
 interface UserData {
   name: string;
@@ -229,6 +230,9 @@ const Header = () => {
           {/* Desktop Right Section */}
           <div className="hidden lg:flex items-center gap-x-4">
             <div className="flex items-center gap-x-3">
+              {/* Alerts Display for Desktop */}
+              {isLoggedIn && userData && <AlertDisplay userId={userData._id} />}
+              
               {/* Loyalty Points Display for Desktop */}
               {renderLoyaltyBadge("desktop")}
             </div>
@@ -290,6 +294,9 @@ const Header = () => {
 
           {/* Tablet Right Section */}
           <div className="hidden sm:flex lg:hidden items-center gap-x-2 md:gap-x-3">
+            {/* Alerts Display for Tablet */}
+            {isLoggedIn && userData && <AlertDisplay userId={userData._id} />}
+            
             {/* Loyalty Points Display for Tablet */}
             {renderLoyaltyBadge("tablet")}
 
@@ -350,6 +357,9 @@ const Header = () => {
 
           {/* Mobile Menu Controls */}
           <div className="flex sm:hidden items-center gap-x-1">
+            {/* Alerts Display for Mobile */}
+            {isLoggedIn && userData && <AlertDisplay userId={userData._id} />}
+            
             {/* Only show loyalty points badge if there's enough space */}
             {renderLoyaltyBadge("mobile")}
 

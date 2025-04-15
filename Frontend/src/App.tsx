@@ -27,8 +27,8 @@ import AdminBookings from "./pages/AdminBookings"; // Import the AdminBookings c
 import EsewaSuccess from "./pages/EsewaSuccess"; // Import the EsewaSuccess component
 import EsewaFailure from "./pages/EsewaFailure"; // Import the EsewaFailure component
 import AdminUserManagement from "./pages/AdminUserManagement"; // Import the AdminUserManagement component
-import AdminBanners from "./pages/AdminBanners"; // Import the AdminBanners component
 import BannerManagement from "./pages/BannerManagement";
+import NotificationCenter from "./pages/NotificationCenter"; // Import the new NotificationCenter page
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -86,6 +86,12 @@ const App: React.FC = () => {
           <Route
             path="/history"
             element={isAuthenticated() ? <History /> : <Navigate to="/login" />}
+          />
+          
+          {/* New Notification Center route */}
+          <Route
+            path="/notifications"
+            element={isAuthenticated() ? <NotificationCenter /> : <Navigate to="/login" />}
           />
         </Route>
 

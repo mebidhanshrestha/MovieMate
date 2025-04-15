@@ -4,9 +4,10 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Banner = require('../models/Banner');
+const Alert = require('../models/Alert');
 const { verifyAdmin } = require('../middleware/authMiddleware');
 
-// Debug: Log current working directory
+// Debug: Log current working directory for banner routes
 console.log('Current working directory for banner routes:', process.cwd());
 
 // Set up storage for uploaded files - matching the existing structure
@@ -104,6 +105,23 @@ router.post('/', verifyAdmin, upload.single('image'), async (req, res) => {
 
     await newBanner.save();
     console.log('Banner saved successfully:', newBanner);
+    
+    // Create a global alert for the new banner
+    try {
+      const newAlert = new Alert({
+        message: `New banner added: ${title}`,
+        link: '/',
+        type: 'banner',
+        global: true
+      });
+      
+      await newAlert.save();
+      console.log('Banner alert created successfully');
+    } catch (alertError) {
+      console.error('Error creating banner alert:', alertError);
+      // Don't fail the banner creation if alert creation fails
+    }
+    
     res.status(201).json(newBanner);
   } catch (error) {
     console.error('Error adding banner:', error);
@@ -179,8 +197,27 @@ router.patch('/:id/toggle', verifyAdmin, async (req, res) => {
       return res.status(404).json({ message: 'Banner not found' });
     }
 
+    const previousActive = banner.active;
     banner.active = !banner.active;
     await banner.save();
+    
+    // If banner was activated, create an alert
+    if (!previousActive && banner.active) {
+      try {
+        const newAlert = new Alert({
+          message: `New banner activated: ${banner.title}`,
+          link: '/',
+          type: 'banner',
+          global: true
+        });
+        
+        await newAlert.save();
+        console.log('Banner activation alert created successfully');
+      } catch (alertError) {
+        console.error('Error creating banner activation alert:', alertError);
+        // Don't fail the banner toggle if alert creation fails
+      }
+    }
     
     console.log('Banner status toggled to:', banner.active);
     res.json(banner);
