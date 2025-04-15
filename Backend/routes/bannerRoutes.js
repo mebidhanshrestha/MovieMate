@@ -109,7 +109,7 @@ router.post('/', verifyAdmin, upload.single('image'), async (req, res) => {
     // Create a global alert for the new banner
     try {
       const newAlert = new Alert({
-        message: `New banner added: ${title}`,
+        message: `New event added: ${title}`,
         link: '/',
         type: 'banner',
         global: true
