@@ -15,6 +15,9 @@ import {
   Bell,
   Users,
 } from "lucide-react";
+import { Bar, Line } from 'react-chartjs-2';
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
 interface Notification {
   _id: string;
@@ -33,6 +36,23 @@ interface JwtPayload {
   role: string;
 }
 
+interface DashboardMetrics {
+  totalUsers: number;
+  hostingMovies: number;
+  expiredMovies: number;
+  activeBanners: number;
+  menuItems: number;
+  totalBookings: number;
+}
+
+interface Activity {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: string;
+  user: string;
+}
+
 const DashboardLayout: React.FC = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,6 +62,15 @@ const DashboardLayout: React.FC = (): JSX.Element => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState("Admin User"); // State for dynamic username
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
+    totalUsers: 0,
+    hostingMovies: 0,
+    expiredMovies: 0,
+    activeBanners: 0,
+    menuItems: 0,
+    totalBookings: 0
+  });
+  const [metricsLoading, setMetricsLoading] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = (): void => {
@@ -167,6 +196,32 @@ const DashboardLayout: React.FC = (): JSX.Element => {
     // Poll for new notifications every minute
     const interval = setInterval(fetchNotifications, 60000);
     
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchMetrics = async () => {
+    try {
+      setMetricsLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const response = await axios.get('http://localhost:3001/api/dashboard/metrics', {
+        headers: { Authorization: token }
+      });
+      
+      if (response.data?.success) {
+        setMetrics(response.data.metrics);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard metrics:', error);
+    } finally {
+      setMetricsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -318,6 +373,18 @@ const DashboardLayout: React.FC = (): JSX.Element => {
       icon: <BookText className="w-5 h-5" />,
     },
   ];
+
+  const renderMetricsCard = (title: string, value: number, icon: JSX.Element) => (
+    <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
+      <div className="text-gray-500 mb-2">{title}</div>
+      {metricsLoading ? (
+        <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
+      ) : (
+        <div className="text-3xl font-bold">{value}</div>
+      )}
+      <div className="mt-2 text-gray-400">{icon}</div>
+    </div>
+  );
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -570,6 +637,16 @@ const DashboardLayout: React.FC = (): JSX.Element => {
         {/* Page Content */}
         <main className="flex-1 overflow-auto bg-gray-50 p-6">
           <div className="max-w-7xl mx-auto">
+            {location.pathname === '/dashboard' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {renderMetricsCard('Total Users', metrics.totalUsers, <Users size={24} />)}
+                {renderMetricsCard('Hosting Movies', metrics.hostingMovies, <Film size={24} />)}
+                {renderMetricsCard('Expired Movies', metrics.expiredMovies, <Calendar size={24} />)}
+                {renderMetricsCard('Active Banners', metrics.activeBanners, <BookText size={24} />)}
+                {renderMetricsCard('Menu Items', metrics.menuItems, <Coffee size={24} />)}
+                {renderMetricsCard('Total Bookings', metrics.totalBookings, <BookText size={24} />)}
+              </div>
+            )}
             <Outlet />
           </div>
         </main>

@@ -16,6 +16,7 @@ const loyaltypointRoutes = require('./routes/loyaltypointRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
 const alertRoutes = require('./routes/alertRoutes');
+const dashboardRoutes = require('./routes/dashboardRoute');
 const cron = require('node-cron');
 
 // Load environment variables
@@ -56,6 +57,7 @@ app.use('/api/loyalty-points', loyaltypointRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/banner', bannerRoutes);
 app.use('/api/alerts', alertRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Base route
 app.get('/', (req, res) => {
