@@ -638,14 +638,116 @@ const DashboardLayout: React.FC = (): JSX.Element => {
         <main className="flex-1 overflow-auto bg-gray-50 p-6">
           <div className="max-w-7xl mx-auto">
             {location.pathname === '/dashboard' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {renderMetricsCard('Total Users', metrics.totalUsers, <Users size={24} />)}
-                {renderMetricsCard('Hosting Movies', metrics.hostingMovies, <Film size={24} />)}
-                {renderMetricsCard('Expired Movies', metrics.expiredMovies, <Calendar size={24} />)}
-                {renderMetricsCard('Active Banners', metrics.activeBanners, <BookText size={24} />)}
-                {renderMetricsCard('Menu Items', metrics.menuItems, <Coffee size={24} />)}
-                {renderMetricsCard('Total Bookings', metrics.totalBookings, <BookText size={24} />)}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  {renderMetricsCard('Total Users', metrics.totalUsers, <Users size={24} />)}
+                  {renderMetricsCard('Hosting Movies', metrics.hostingMovies, <Film size={24} />)}
+                  {renderMetricsCard('Expired Movies', metrics.expiredMovies, <Calendar size={24} />)}
+                  {renderMetricsCard('Active Events', metrics.activeBanners, <BookText size={24} />)}
+                  {renderMetricsCard('Menu Items', metrics.menuItems, <Coffee size={24} />)}
+                  {renderMetricsCard('Total Bookings', metrics.totalBookings, <BookText size={24} />)}
+                </div>
+                {/* Data Visualization Chart */}
+                <div className="relative w-full bg-gradient-to-br from-[#FFF9E5] via-white to-[#FFFBEA] rounded-2xl shadow-lg p-8 mb-10  border-2 border-[#FBC700]/30">
+                  <div className="absolute top-4 right-6 flex items-center gap-2">
+                    <span className="inline-block h-3 w-3 rounded-full bg-[#FBC700] animate-pulse"></span>
+                    <span className="text-xs font-semibold text-[#FBC700]">Live Data</span>
+                  </div>
+                  <h3 className="text-2xl font-extrabold mb-6 text-gray-800 tracking-tight flex items-center gap-2">
+                    <span className="bg-[#FBC700]/20 px-3 py-1 rounded-lg text-[#B88900]">Dashboard Insights</span>
+                  </h3>
+                  <Bar
+                    data={{
+                      labels: [
+                        'Total Users',
+                        'Hosting Movies',
+                        'Expired Movies',
+                        'Active Events',
+                        'Menu Items',
+                        'Total Bookings',
+                      ],
+                      datasets: [
+                        {
+                          label: 'Count',
+                          data: [
+                            metrics.totalUsers,
+                            metrics.hostingMovies,
+                            metrics.expiredMovies,
+                            metrics.activeBanners,
+                            metrics.menuItems,
+                            metrics.totalBookings,
+                          ],
+                          backgroundColor: [
+                            'rgba(251, 191, 36, 0.85)', // gold
+                            'rgba(96, 165, 250, 0.85)', // blue
+                            'rgba(248, 113, 113, 0.85)', // red
+                            'rgba(52, 211, 153, 0.85)', // green
+                            'rgba(167, 139, 250, 0.85)', // purple
+                            'rgba(244, 114, 182, 0.85)', // pink
+                          ],
+                          borderColor: [
+                            '#FBC700',
+                            '#60a5fa',
+                            '#f87171',
+                            '#34d399',
+                            '#a78bfa',
+                            '#f472b6',
+                          ],
+                          borderWidth: 2,
+                          borderRadius: 10,
+                          hoverBackgroundColor: '#FBC700',
+                          barPercentage: 0.7,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      animation: {
+                        duration: 1200,
+                        easing: 'easeOutQuart',
+                      },
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          backgroundColor: '#222',
+                          titleColor: '#FBC700',
+                          bodyColor: '#fff',
+                          borderColor: '#FBC700',
+                          borderWidth: 1,
+                          padding: 12,
+                          cornerRadius: 10,
+                          callbacks: {
+                            label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y}`,
+                          },
+                        },
+                        title: { display: false },
+                      },
+                      scales: {
+                        x: {
+                          grid: {
+                            display: false,
+                          },
+                          ticks: {
+                            color: '#B88900',
+                            font: { weight: 'bold', size: 14 },
+                          },
+                        },
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            color: '#FFF1C6',
+                          },
+                          ticks: {
+                            color: '#B88900',
+                            font: { weight: 'bold', size: 14 },
+                            stepSize: 1,
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </>
             )}
             <Outlet />
           </div>

@@ -40,7 +40,9 @@ const AdminMovie = () => {
     try {
       setLoading(true);
       const response = await axios.get("http://localhost:3001/api/movie");
-      const moviesData = response.data.movies || [];
+      let moviesData = response.data.movies || [];
+      // Sort movies by start_date descending (most recent first)
+      moviesData = moviesData.sort((a: Movie, b: Movie) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
       setMovies(moviesData);
       setFilteredMovies(moviesData);
       setLoading(false);
@@ -65,7 +67,8 @@ const AdminMovie = () => {
         movie.type.toLowerCase().includes(lowercasedSearch) ||
         movie.status.toLowerCase().includes(lowercasedSearch)
       );
-      setFilteredMovies(filtered);
+      // Sort filtered movies by start_date descending
+      setFilteredMovies(filtered.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()));
     }
   }, [searchTerm, movies]);
 
