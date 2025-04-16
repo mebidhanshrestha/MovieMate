@@ -94,6 +94,11 @@ const AdminMovie = () => {
       
       setIsEditing(true);
       setSelectedMovieId(id);
+      
+      // Scroll to the edit form
+      setTimeout(() => {
+        document.getElementById('movieEditForm')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     } catch (error) {
       console.error("Error fetching movie details:", error);
     }
@@ -187,7 +192,7 @@ const AdminMovie = () => {
       </h2>
       
       {/* Movie Form */}
-      <form onSubmit={handleSubmit} className="space-y-6 mb-10">
+      <form id="movieEditForm" onSubmit={handleSubmit} className="space-y-6 mb-10">
         <div className="flex gap-4">
           <div className="w-1/2">
             <label className="block font-medium text-gray-700">Title:</label>
