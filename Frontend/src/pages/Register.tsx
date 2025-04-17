@@ -151,7 +151,7 @@ const Register = (): JSX.Element => {
         <div className="flex items-center justify-between mt-6">
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-primary text-white font-bold rounded-md shadow hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-black bg-primary hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             Sign Up
           </button>
