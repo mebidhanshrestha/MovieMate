@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Search } from "lucide-react";
+import Popup from "../components/Popup"; // Adjust the import path as needed
 
 interface Movie {
   _id: string;
@@ -14,6 +15,20 @@ interface Movie {
   price: number;
 }
 
+interface PopupConfig {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  primaryButton: {
+    text: string;
+    onClick: () => void;
+  };
+  secondaryButton?: {
+    text: string;
+    onClick: () => void;
+  };
+}
+
 const AdminMovie = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
@@ -21,6 +36,17 @@ const AdminMovie = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Popup state
+  const [popup, setPopup] = useState<PopupConfig>({
+    isOpen: false,
+    title: "",
+    message: "",
+    primaryButton: {
+      text: "OK",
+      onClick: () => closePopup()
+    }
+  });
   
   const initialMovieState = {
     title: "",
@@ -34,6 +60,23 @@ const AdminMovie = () => {
   };
   
   const [movie, setMovie] = useState(initialMovieState);
+  
+  // Helper function to show popup
+  const showPopup = (config: Partial<PopupConfig>) => {
+    setPopup({
+      ...popup,
+      isOpen: true,
+      ...config
+    });
+  };
+  
+  // Helper function to close popup
+  const closePopup = () => {
+    setPopup({
+      ...popup,
+      isOpen: false
+    });
+  };
   
   // Fetch all movies
   const fetchMovies = async () => {
@@ -69,6 +112,14 @@ const AdminMovie = () => {
     } catch (error) {
       console.error("Error fetching movies:", error);
       setLoading(false);
+      showPopup({
+        title: "Error",
+        message: "Failed to fetch movies. Please try again.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     }
   };
   
@@ -124,6 +175,14 @@ const AdminMovie = () => {
       }, 100);
     } catch (error) {
       console.error("Error fetching movie details:", error);
+      showPopup({
+        title: "Error",
+        message: "Failed to fetch movie details. Please try again.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     }
   };
 
@@ -168,35 +227,89 @@ const AdminMovie = () => {
         await axios.put(`http://localhost:3001/api/movie/${selectedMovieId}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        alert("Movie updated successfully!");
+        showPopup({
+          title: "Success",
+          message: "Movie updated successfully!",
+          primaryButton: {
+            text: "OK",
+            onClick: () => {
+              closePopup();
+              resetForm();
+              fetchMovies();
+            }
+          }
+        });
       } else {
         // Add new movie
         await axios.post("http://localhost:3001/api/movie/add", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        alert("Movie added successfully!");
+        showPopup({
+          title: "Success",
+          message: "Movie added successfully!",
+          primaryButton: {
+            text: "OK",
+            onClick: () => {
+              closePopup();
+              resetForm();
+              fetchMovies();
+            }
+          }
+        });
       }
-      
-      // Reset form and refresh movie list
-      resetForm();
-      fetchMovies();
     } catch (error) {
       console.error("Error saving movie:", error);
-      alert("Error saving movie. Please try again.");
+      showPopup({
+        title: "Error",
+        message: "Error saving movie. Please try again.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this movie?")) {
-      try {
-        await axios.delete(`http://localhost:3001/api/movie/${id}`);
-        alert("Movie deleted successfully!");
-        fetchMovies();
-      } catch (error) {
-        console.error("Error deleting movie:", error);
-        alert("Error deleting movie. Please try again.");
+    showPopup({
+      title: "Confirm Delete",
+      message: "Are you sure you want to delete this movie?",
+      primaryButton: {
+        text: "Delete",
+        onClick: async () => {
+          try {
+            await axios.delete(`http://localhost:3001/api/movie/${id}`);
+            closePopup();
+            showPopup({
+              title: "Success",
+              message: "Movie deleted successfully!",
+              primaryButton: {
+                text: "OK",
+                onClick: () => {
+                  closePopup();
+                  fetchMovies();
+                }
+              }
+            });
+          } catch (error) {
+            console.error("Error deleting movie:", error);
+            closePopup();
+            showPopup({
+              title: "Error",
+              message: "Error deleting movie. Please try again.",
+              primaryButton: {
+                text: "OK",
+                onClick: closePopup
+              }
+            });
+          }
+        }
+      },
+      secondaryButton: {
+        text: "Cancel",
+        onClick: closePopup
       }
-    }
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -433,6 +546,16 @@ const AdminMovie = () => {
           </div>
         )}
       </div>
+      
+      {/* Popup Component */}
+      <Popup 
+        isOpen={popup.isOpen}
+        onClose={closePopup}
+        title={popup.title}
+        message={popup.message}
+        primaryButton={popup.primaryButton}
+        secondaryButton={popup.secondaryButton}
+      />
     </div>
   );
 };

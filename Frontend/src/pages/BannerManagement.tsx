@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { X, Plus, Trash, Edit, Eye, EyeOff, ArrowUp, ArrowDown } from "lucide-react";
+import Popup from "../components/Popup"; // Adjust the import path as needed
 
 interface Banner {
   _id: string;
@@ -11,6 +12,20 @@ interface Banner {
   order: number;
   createdAt?: string;
   updatedAt?: string;
+}
+
+interface PopupConfig {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  primaryButton: {
+    text: string;
+    onClick: () => void;
+  };
+  secondaryButton?: {
+    text: string;
+    onClick: () => void;
+  };
 }
 
 export default function BannerManagement() {
@@ -26,6 +41,34 @@ export default function BannerManagement() {
     altText: "",
     active: true
   });
+  
+  // Popup state
+  const [popup, setPopup] = useState<PopupConfig>({
+    isOpen: false,
+    title: "",
+    message: "",
+    primaryButton: {
+      text: "OK",
+      onClick: () => closePopup()
+    }
+  });
+  
+  // Helper function to show popup
+  const showPopup = (config: Partial<PopupConfig>) => {
+    setPopup({
+      ...popup,
+      isOpen: true,
+      ...config
+    });
+  };
+  
+  // Helper function to close popup
+  const closePopup = () => {
+    setPopup({
+      ...popup,
+      isOpen: false
+    });
+  };
   
   // For the token (you might want to use a context or state management for this)
   const token = localStorage.getItem("token");
@@ -166,10 +209,30 @@ export default function BannerManagement() {
           formDataToSend,
           { headers }
         );
+        
+        showPopup({
+          title: "Success",
+          message: "Banner updated successfully!",
+          primaryButton: {
+            text: "OK",
+            onClick: () => {
+              closePopup();
+              closeModal();
+              fetchBanners();
+            }
+          }
+        });
       } else {
         // Create new banner
         if (!selectedFile) {
-          alert("Please select an image");
+          showPopup({
+            title: "Missing Image",
+            message: "Please select an image",
+            primaryButton: {
+              text: "OK",
+              onClick: closePopup
+            }
+          });
           return;
         }
         
@@ -178,13 +241,31 @@ export default function BannerManagement() {
           formDataToSend,
           { headers }
         );
+        
+        showPopup({
+          title: "Success",
+          message: "Banner added successfully!",
+          primaryButton: {
+            text: "OK",
+            onClick: () => {
+              closePopup();
+              closeModal();
+              fetchBanners();
+            }
+          }
+        });
       }
-      
-      closeModal();
-      fetchBanners();
     } catch (err) {
       console.error("Error saving banner:", err);
       setError("Failed to save banner");
+      showPopup({
+        title: "Error",
+        message: "Failed to save banner. Please try again.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     }
   };
 
@@ -203,25 +284,62 @@ export default function BannerManagement() {
     } catch (err) {
       console.error("Error toggling banner status:", err);
       setError("Failed to update banner status");
+      showPopup({
+        title: "Error",
+        message: "Failed to update banner status. Please try again.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     }
   };
 
   const deleteBanner = async (bannerId: string) => {
-    if (!window.confirm("Are you sure you want to delete this banner?")) {
-      return;
-    }
-    
-    try {
-      await axios.delete(`http://localhost:3001/api/banner/${bannerId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+    showPopup({
+      title: "Confirm Delete",
+      message: "Are you sure you want to delete this banner?",
+      primaryButton: {
+        text: "Delete",
+        onClick: async () => {
+          closePopup();
+          try {
+            await axios.delete(`http://localhost:3001/api/banner/${bannerId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            });
+            
+            showPopup({
+              title: "Success",
+              message: "Banner deleted successfully!",
+              primaryButton: {
+                text: "OK",
+                onClick: () => {
+                  closePopup();
+                  fetchBanners();
+                }
+              }
+            });
+          } catch (err) {
+            console.error("Error deleting banner:", err);
+            setError("Failed to delete banner");
+            showPopup({
+              title: "Error",
+              message: "Failed to delete banner. Please try again.",
+              primaryButton: {
+                text: "OK",
+                onClick: closePopup
+              }
+            });
+          }
         }
-      });
-      fetchBanners();
-    } catch (err) {
-      console.error("Error deleting banner:", err);
-      setError("Failed to delete banner");
-    }
+      },
+      secondaryButton: {
+        text: "Cancel",
+        onClick: closePopup
+      }
+    });
   };
 
   const reorderBanner = async (bannerId: string, direction: "up" | "down") => {
@@ -265,6 +383,14 @@ export default function BannerManagement() {
     } catch (err) {
       console.error("Error reordering banners:", err);
       setError("Failed to reorder banners");
+      showPopup({
+        title: "Error",
+        message: "Failed to reorder banners. Please try again.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     }
   };
 
@@ -496,6 +622,16 @@ export default function BannerManagement() {
           </div>
         </div>
       )}
+      
+      {/* Popup Component */}
+      <Popup 
+        isOpen={popup.isOpen}
+        onClose={closePopup}
+        title={popup.title}
+        message={popup.message}
+        primaryButton={popup.primaryButton}
+        secondaryButton={popup.secondaryButton}
+      />
     </div>
   );
 }

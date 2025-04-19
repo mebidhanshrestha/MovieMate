@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, ChangeEvent, FormEvent } from 'react';
 import axios from 'axios';
+import Popup from '../components/Popup'; // Adjust the import path as needed
 
 // Define interfaces for our data types
 interface MenuItem {
@@ -17,6 +18,20 @@ interface NewMenuItem {
   weight: string;
   calories: string;
   image: File | null;
+}
+
+interface PopupConfig {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  primaryButton: {
+    text: string;
+    onClick: () => void;
+  };
+  secondaryButton?: {
+    text: string;
+    onClick: () => void;
+  };
 }
 
 const AdminMenu = () => {
@@ -40,6 +55,34 @@ const AdminMenu = () => {
     calories: '',
     image: null as File | null,
   });
+  
+  // Popup state
+  const [popup, setPopup] = useState<PopupConfig>({
+    isOpen: false,
+    title: "",
+    message: "",
+    primaryButton: {
+      text: "OK",
+      onClick: () => closePopup()
+    }
+  });
+  
+  // Helper function to show popup
+  const showPopup = (config: Partial<PopupConfig>) => {
+    setPopup({
+      ...popup,
+      isOpen: true,
+      ...config
+    });
+  };
+  
+  // Helper function to close popup
+  const closePopup = () => {
+    setPopup({
+      ...popup,
+      isOpen: false
+    });
+  };
 
   useEffect(() => {
     fetchMenuItems();
@@ -48,7 +91,17 @@ const AdminMenu = () => {
   const fetchMenuItems = () => {
     axios.get<MenuItem[]>('http://localhost:3001/api/menu')
       .then(res => setMenuItems(res.data))
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error(err);
+        showPopup({
+          title: "Error",
+          message: "Failed to fetch menu items. Please try again.",
+          primaryButton: {
+            text: "OK",
+            onClick: closePopup
+          }
+        });
+      });
   };
 
   // Handle file change for new item
@@ -80,7 +133,14 @@ const AdminMenu = () => {
     e.preventDefault();
     
     if (!newItem.name || !newItem.price || !newItem.weight || !newItem.calories || !newItem.image) {
-      alert('Please fill all fields and upload an image');
+      showPopup({
+        title: "Missing Information",
+        message: "Please fill all fields and upload an image",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
       return;
     }
 
@@ -100,8 +160,25 @@ const AdminMenu = () => {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      
+      showPopup({
+        title: "Success",
+        message: "Menu item added successfully!",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     } catch (error) {
       console.error(error);
+      showPopup({
+        title: "Error",
+        message: "Failed to add menu item. Please try again.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     }
   };
 
@@ -142,7 +219,14 @@ const AdminMenu = () => {
     if (!editingItem) return;
     
     if (!editFormData.name || !editFormData.price || !editFormData.weight || !editFormData.calories) {
-      alert('Please fill all fields');
+      showPopup({
+        title: "Missing Information",
+        message: "Please fill all fields",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
       return;
     }
 
@@ -171,15 +255,52 @@ const AdminMenu = () => {
         item._id === editingItem._id ? res.data : item
       ));
       
-      // Reset the edit form and state
-      setIsEditing(false);
-      setEditingItem(null);
-      if (editFileInputRef.current) {
-        editFileInputRef.current.value = '';
-      }
+      showPopup({
+        title: "Success",
+        message: "Menu item updated successfully!",
+        primaryButton: {
+          text: "OK",
+          onClick: () => {
+            closePopup();
+            // Reset the edit form and state
+            setIsEditing(false);
+            setEditingItem(null);
+            if (editFileInputRef.current) {
+              editFileInputRef.current.value = '';
+            }
+          }
+        }
+      });
     } catch (error) {
       console.error(error);
+      showPopup({
+        title: "Error",
+        message: "Failed to update menu item. Please try again.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     }
+  };
+
+  // Handle confirming deletion of menu item
+  const confirmDelete = (id: string, name: string) => {
+    showPopup({
+      title: "Confirm Delete",
+      message: `Are you sure you want to delete "${name}"?`,
+      primaryButton: {
+        text: "Delete",
+        onClick: () => {
+          handleDelete(id);
+          closePopup();
+        }
+      },
+      secondaryButton: {
+        text: "Cancel",
+        onClick: closePopup
+      }
+    });
   };
 
   // Handle deleting menu item
@@ -187,8 +308,25 @@ const AdminMenu = () => {
     try {
       await axios.delete(`http://localhost:3001/api/menu/delete/${id}`);
       setMenuItems(menuItems.filter(item => item._id !== id));
+      
+      showPopup({
+        title: "Success",
+        message: "Menu item deleted successfully!",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     } catch (error) {
       console.error(error);
+      showPopup({
+        title: "Error",
+        message: "Failed to delete menu item. Please try again.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     }
   };
 
@@ -414,7 +552,7 @@ const AdminMenu = () => {
                   Edit
                 </button>
                 <button 
-                  onClick={() => handleDelete(item._id)} 
+                  onClick={() => confirmDelete(item._id, item.name)} 
                   className="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg hover:bg-red-600 transition-colors duration-200 flex items-center justify-center"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -438,6 +576,16 @@ const AdminMenu = () => {
           <p className="text-gray-500">Add your first menu item using the form above</p>
         </div>
       )}
+      
+      {/* Popup Component */}
+      <Popup 
+        isOpen={popup.isOpen}
+        onClose={closePopup}
+        title={popup.title}
+        message={popup.message}
+        primaryButton={popup.primaryButton}
+        secondaryButton={popup.secondaryButton}
+      />
     </div>
   );
 };

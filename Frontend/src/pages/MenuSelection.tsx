@@ -9,6 +9,8 @@ type MenuItem = {
   image: string;
   description?: string;
   category?: string;
+  weight: number;  // Added weight property
+  calories: number; // Added calories property
 };
 
 const MenuSelection = () => {
@@ -155,6 +157,31 @@ const MenuSelection = () => {
                   Rs. {item.price.toFixed(2)}
                 </p>
               </div>
+              
+              {/* Nutritional Information */}
+              {(item.weight || item.calories) && (
+                <div className="flex items-center gap-4 text-gray-500 mb-2">
+                  {item.weight ? (
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                      </svg>
+                      <span className="text-xs">{item.weight}g</span>
+                    </div>
+                  ) : null}
+                  
+                  {item.calories ? (
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+                      </svg>
+                      <span className="text-xs">{item.calories} Kcal</span>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+              
               {item.description && (
                 <p className="text-sm text-gray-500 mb-4">{item.description}</p>
               )}

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Popup from "../components/Popup"; // Adjust the import path as needed
 
 interface Movie {
   _id: string;
@@ -28,6 +29,20 @@ interface Showtime {
   end_time: string;
 }
 
+interface PopupConfig {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  primaryButton: {
+    text: string;
+    onClick: () => void;
+  };
+  secondaryButton?: {
+    text: string;
+    onClick: () => void;
+  };
+}
+
 const AdminPanel = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -45,21 +60,48 @@ const AdminPanel = () => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [currentRoomId, setCurrentRoomId] = useState<string>("");
   
-  // Fetch movies
- // Inside your useEffect for fetching movies, add this filter
- useEffect(() => {
-  axios.get("http://localhost:3001/api/movie/")
-    .then((res) => {
-      const activeMovies = res.data.movies.filter(
-        (movie: Movie) => movie.status === "hosting"
-      );
-      setMovies(activeMovies);
-    })
-    .catch((error) => {
-      console.error("Error fetching movies:", error);
-      toast.error("Failed to load movies. Please refresh the page.");
+  // Popup state
+  const [popup, setPopup] = useState<PopupConfig>({
+    isOpen: false,
+    title: "",
+    message: "",
+    primaryButton: {
+      text: "OK",
+      onClick: () => closePopup()
+    }
+  });
+  
+  // Helper function to show popup
+  const showPopup = (config: Partial<PopupConfig>) => {
+    setPopup({
+      ...popup,
+      isOpen: true,
+      ...config
     });
-}, []);
+  };
+  
+  // Helper function to close popup
+  const closePopup = () => {
+    setPopup({
+      ...popup,
+      isOpen: false
+    });
+  };
+  
+  // Fetch movies
+  useEffect(() => {
+    axios.get("http://localhost:3001/api/movie/")
+      .then((res) => {
+        const activeMovies = res.data.movies.filter(
+          (movie: Movie) => movie.status === "hosting"
+        );
+        setMovies(activeMovies);
+      })
+      .catch((error) => {
+        console.error("Error fetching movies:", error);
+        toast.error("Failed to load movies. Please refresh the page.");
+      });
+  }, []);
 
   // Fetch rooms
   useEffect(() => {
@@ -102,13 +144,27 @@ const AdminPanel = () => {
     // Validate dates and times
     for (const showtime of showtimes) {
       if (!showtime.date) {
-        alert("Please select a date for all showtimes.");
+        showPopup({
+          title: "Validation Error",
+          message: "Please select a date for all showtimes.",
+          primaryButton: {
+            text: "OK",
+            onClick: closePopup
+          }
+        });
         return;
       }
       
       for (const time of showtime.times) {
         if (!time.start_time || !time.end_time) {
-          alert("Please set both start and end times for all time slots.");
+          showPopup({
+            title: "Validation Error",
+            message: "Please set both start and end times for all time slots.",
+            primaryButton: {
+              text: "OK",
+              onClick: closePopup
+            }
+          });
           return;
         }
       }
@@ -151,7 +207,14 @@ const AdminPanel = () => {
       })
       .catch((error) => {
         console.error("Error fetching showtimes:", error);
-        alert("Failed to fetch showtimes for this room.");
+        showPopup({
+          title: "Error",
+          message: "Failed to fetch showtimes for this room.",
+          primaryButton: {
+            text: "OK",
+            onClick: closePopup
+          }
+        });
       })
       .finally(() => {
         setIsLoading(false);
@@ -198,7 +261,14 @@ const AdminPanel = () => {
   // Save edited showtime
   const saveEditedShowtime = async () => {
     if (!editingShowtime || !editDate || !editStartTime || !editEndTime) {
-      alert("Please fill in all fields.");
+      showPopup({
+        title: "Validation Error",
+        message: "Please fill in all fields.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
       return;
     }
 
@@ -212,15 +282,30 @@ const AdminPanel = () => {
         end_time: editEndTime
       });
 
-      alert("Showtime updated successfully!");
-      
-      // Refresh showtimes and reset edit state
-      fetchShowtimes(currentRoomId);
-      cancelEdit();
+      showPopup({
+        title: "Success",
+        message: "Showtime updated successfully!",
+        primaryButton: {
+          text: "OK",
+          onClick: () => {
+            closePopup();
+            // Refresh showtimes and reset edit state
+            fetchShowtimes(currentRoomId);
+            cancelEdit();
+          }
+        }
+      });
       
     } catch (error) {
       console.error("Error updating showtime:", error);
-      alert("Failed to update showtime.");
+      showPopup({
+        title: "Error",
+        message: "Failed to update showtime.",
+        primaryButton: {
+          text: "OK",
+          onClick: closePopup
+        }
+      });
     } finally {
       setIsLoading(false);
     }
@@ -228,28 +313,53 @@ const AdminPanel = () => {
 
   // Delete showtime
   const deleteShowtime = async (showtimeId: string) => {
-    if (!confirm("Are you sure you want to delete this showtime?")) {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      
-      const response = await axios.delete(`http://localhost:3001/api/room/showtime/${showtimeId}`, {
-        data: { room_id: currentRoomId }
-      });
-
-      alert("Showtime deleted successfully!");
-      
-      // Refresh showtimes
-      fetchShowtimes(currentRoomId);
-      
-    } catch (error) {
-      console.error("Error deleting showtime:", error);
-      alert("Failed to delete showtime.");
-    } finally {
-      setIsLoading(false);
-    }
+    showPopup({
+      title: "Confirm Delete",
+      message: "Are you sure you want to delete this showtime?",
+      primaryButton: {
+        text: "Delete",
+        onClick: async () => {
+          try {
+            setIsLoading(true);
+            closePopup();
+            
+            const response = await axios.delete(`http://localhost:3001/api/room/showtime/${showtimeId}`, {
+              data: { room_id: currentRoomId }
+            });
+            
+            showPopup({
+              title: "Success",
+              message: "Showtime deleted successfully!",
+              primaryButton: {
+                text: "OK",
+                onClick: () => {
+                  closePopup();
+                  // Refresh showtimes
+                  fetchShowtimes(currentRoomId);
+                }
+              }
+            });
+            
+          } catch (error) {
+            console.error("Error deleting showtime:", error);
+            showPopup({
+              title: "Error",
+              message: "Failed to delete showtime.",
+              primaryButton: {
+                text: "OK",
+                onClick: closePopup
+              }
+            });
+          } finally {
+            setIsLoading(false);
+          }
+        }
+      },
+      secondaryButton: {
+        text: "Cancel",
+        onClick: closePopup
+      }
+    });
   };
 
   // Format date for display
@@ -468,7 +578,17 @@ const AdminPanel = () => {
       >
         {isLoading ? "Allocating..." : "Allocate Movie"}
       </button>
+      
+      {/* Toast and Popup components */}
       <ToastContainer position="top-right" />
+      <Popup 
+        isOpen={popup.isOpen}
+        onClose={closePopup}
+        title={popup.title}
+        message={popup.message}
+        primaryButton={popup.primaryButton}
+        secondaryButton={popup.secondaryButton}
+      />
     </div>
   );
 };
