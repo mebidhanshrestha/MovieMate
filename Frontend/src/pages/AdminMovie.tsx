@@ -41,6 +41,26 @@ const AdminMovie = () => {
       setLoading(true);
       const response = await axios.get("http://localhost:3001/api/movie");
       let moviesData = response.data.movies || [];
+      
+      // Update status based on end date
+      moviesData = moviesData.map((movie: Movie) => {
+        const endDate = new Date(movie.end_date);
+        const currentDate = new Date();
+        
+        // If end date has passed, update status to expired
+        if (endDate < currentDate && movie.status === "hosting") {
+          // Update the movie status in the backend
+          axios.patch(`http://localhost:3001/api/movie/${movie._id}`, {
+            status: "expired"
+          }).catch(error => {
+            console.error("Error updating movie status:", error);
+          });
+          
+          return { ...movie, status: "expired" };
+        }
+        return movie;
+      });
+
       // Sort movies by start_date descending (most recent first)
       moviesData = moviesData.sort((a: Movie, b: Movie) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
       setMovies(moviesData);
