@@ -65,7 +65,7 @@ const Footer = () => {
           <a href="tel:9812428116" className="mb-1 block text-gray-600 text-base mt-3 whitespace-nowrap font-roboto">
             Call: +977 9812428116
           </a>
-          <a href="mailto:bidhanshrestha2019@gmail.com" className="text-gray-600 whitespace-nowrap font-roboto">
+          <a href="mailto:moviemate5479@gmail.com" className="text-gray-600 whitespace-nowrap font-roboto">
             Email: contact@moviemate.com
           </a>
         </div>

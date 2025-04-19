@@ -9,8 +9,8 @@ type MenuItem = {
   image: string;
   description?: string;
   category?: string;
-  weight: number;  // Added weight property
-  calories: number; // Added calories property
+  weight: number;
+  calories: number;
 };
 
 const MenuSelection = () => {
@@ -20,7 +20,6 @@ const MenuSelection = () => {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("all");
   const location = useLocation();
   const navigate = useNavigate();
   const { selectedSeats, showtimeId, movieId, roomId } = location.state || {};
@@ -69,18 +68,6 @@ const MenuSelection = () => {
     );
   };
 
-  // Extract all unique categories
-  const categories = [
-    "all",
-    ...Array.from(new Set(menu.map((item) => item.category || "other"))),
-  ];
-
-  // Filter menu items based on active tab
-  const filteredMenu =
-    activeTab === "all"
-      ? menu
-      : menu.filter((item) => (item.category || "other") === activeTab);
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -108,31 +95,9 @@ const MenuSelection = () => {
         Enhance your movie experience with delicious treats
       </p>
 
-      {/* Category Tabs */}
-      <div className="mb-8 overflow-x-auto">
-        <div className="flex space-x-2 pb-2">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setActiveTab(category)}
-              className={`px-4 py-2 rounded-full whitespace-nowrap transition-all ${
-                activeTab === category
-                  ? "text-gray-800 font-medium"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-              style={{
-                backgroundColor: activeTab === category ? "#FBC700" : "#f3f4f6",
-              }}
-            >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Menu Items */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {filteredMenu.map((item) => (
+        {menu.map((item) => (
           <div
             key={item._id}
             className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
@@ -185,7 +150,7 @@ const MenuSelection = () => {
               {item.description && (
                 <p className="text-sm text-gray-500 mb-4">{item.description}</p>
               )}
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-center mt-4">
                 <div className="flex items-center border rounded-lg overflow-hidden">
                   <button
                     className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600"
@@ -214,24 +179,6 @@ const MenuSelection = () => {
                     +
                   </button>
                 </div>
-                <button
-                  className="px-3 py-1 rounded text-sm font-medium"
-                  style={{
-                    backgroundColor:
-                      (selectedItems[item._id] || 0) > 0
-                        ? "#FBC700"
-                        : "transparent",
-                  }}
-                  onClick={() => {
-                    if (selectedItems[item._id]) {
-                      handleQuantityChange(item._id, 0);
-                    } else {
-                      handleQuantityChange(item._id, 1);
-                    }
-                  }}
-                >
-                  {(selectedItems[item._id] || 0) > 0 ? "Remove" : "Add"}
-                </button>
               </div>
             </div>
           </div>

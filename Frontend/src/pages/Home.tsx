@@ -219,11 +219,6 @@ export default function Home(): JSX.Element {
                       (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x400?text=Image+Not+Found';
                     }}
                   />
-                  {banner.title && (
-                    <div className="absolute bottom-0 left-0 w-full p-4 bg-black bg-opacity-50 text-white rounded-b-[16px]">
-                      <h3 className="text-lg font-semibold">{banner.title}</h3>
-                    </div>
-                  )}
                 </SwiperSlide>
               ))
             )}
