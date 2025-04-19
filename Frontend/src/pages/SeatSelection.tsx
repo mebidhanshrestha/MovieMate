@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import Popup from "../components/Popup";
 
 type Seat = {
   seat_number: string;
@@ -22,6 +23,7 @@ const SeatSelection = () => {
   const [error, setError] = useState<string | null>(null);
   const [showLegend, setShowLegend] = useState(true);
   const [movie, setMovie] = useState<Movie | null>(null);
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const date = new URLSearchParams(location.search).get("date") || "";
@@ -73,6 +75,25 @@ const SeatSelection = () => {
 
   // Sort rows alphabetically
   const sortedRows = Object.keys(groupedSeats).sort();
+
+  const handleContinue = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setShowLoginPopup(true);
+      return;
+    }
+
+    navigate("/menu", { 
+      state: { 
+        selectedSeats, 
+        showtimeId, 
+        movieId, 
+        roomId,
+        date,
+        ticketPrice: getTicketPrice() // Pass the ticket price to the next page
+      } 
+    });
+  };
 
   if (loading) {
     return (
@@ -193,20 +214,31 @@ const SeatSelection = () => {
             boxShadow: selectedSeats.length > 0 ? "0 4px 12px rgba(251, 199, 0, 0.3)" : "none"
           }}
           disabled={selectedSeats.length === 0}
-          onClick={() => navigate("/menu", { 
-            state: { 
-              selectedSeats, 
-              showtimeId, 
-              movieId, 
-              roomId,
-              date,
-              ticketPrice: getTicketPrice() // Pass the ticket price to the next page
-            } 
-          })}
+          onClick={handleContinue}
         >
-          {selectedSeats.length === 0 ? "Please select seats" : "Next: Food & Drinks"}
+          Continue
         </button>
       </div>
+
+      {/* Login Popup */}
+      <Popup
+        isOpen={showLoginPopup}
+        onClose={() => setShowLoginPopup(false)}
+        title="Login Required"
+        message="Please log in to continue with your booking."
+        primaryButton={{
+          text: "Log In",
+          onClick: () => {
+            navigate("/login", {
+              state: { from: location.pathname + location.search }
+            });
+          }
+        }}
+        secondaryButton={{
+          text: "Cancel",
+          onClick: () => setShowLoginPopup(false)
+        }}
+      />
     </div>
   );
 };
