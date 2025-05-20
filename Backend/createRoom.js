@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import Room from "./models/Room.js"; // Adjust path if needed
+const mongoose = require("mongoose");
+const Room = require("./models/Room");
 
 mongoose.connect("mongodb://localhost:27017/moviemate");
 

@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const seatSchema = new mongoose.Schema({
   seat_number: { type: String, required: true },
@@ -19,4 +19,4 @@ const roomSchema = new mongoose.Schema({
   showtimes: [showtimeSchema], // Array of showtimes for this room
 }, { timestamps: true });
 
-export default mongoose.model("Room", roomSchema);
+module.exports = mongoose.model("Room", roomSchema);

@@ -1,17 +1,12 @@
-import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import fs from 'fs';
-import Movie from '../models/Movie.js';
-import Room from '../models/Room.js';
-import Booking from '../models/Booking.js';  
-import Notification from '../models/Notification.js';
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const Movie = require('../models/Movie');
+const Room = require('../models/Room');
+const Booking = require('../models/Booking');
+const Notification = require('../models/Notification');
 
 // Set up Multer storage
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/"); // Directory to store images
@@ -302,20 +297,14 @@ const bookSeats = async (req, res) => {
   }
 };
 
-// Make sure to import the Notification model at the top of your file:
-// const Notification = require('../models/Notification');
-
-// Make sure to import the Notification model at the top of your file:
-// const Notification = require('../models/Notification');
-
-export { 
-  addMovie, 
-  uploadMovie, 
-  getMovies, 
-  getMovieById, 
-  updateMovie, 
-  deleteMovie, 
-  getShowtimes, 
-  getAvailableSeats, 
-  bookSeats,
+module.exports = {
+  addMovie,
+  uploadMovie,
+  getMovies,
+  getMovieById,
+  updateMovie,
+  deleteMovie,
+  getShowtimes,
+  getAvailableSeats,
+  bookSeats
 };

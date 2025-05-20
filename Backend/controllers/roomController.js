@@ -1,5 +1,5 @@
-import Room from "../models/Room.js";
-import Movie from "../models/Movie.js";
+const Room = require("../models/Room");
+const Movie = require("../models/Movie");
 
 // Function to generate seats
 const generateSeats = (rows, cols) => {
@@ -15,7 +15,7 @@ const generateSeats = (rows, cols) => {
 };
 
 // Allocate a movie to a room with showtimes
-export const allocateMovieToRoom = async (req, res) => {
+const allocateMovieToRoom = async (req, res) => {
   try {
     const { movie_id, room_id, schedule } = req.body;
 
@@ -225,7 +225,7 @@ export const allocateMovieToRoom = async (req, res) => {
 };
 
 // Get all showtimes for a room
-export const getRoomShowtimes = async (req, res) => {
+const getRoomShowtimes = async (req, res) => {
   try {
     const { room_id } = req.params;
     const room = await Room.findById(room_id).populate("showtimes.movie_id");
@@ -239,7 +239,7 @@ export const getRoomShowtimes = async (req, res) => {
   }
 };
 
-export const getRooms = async (req, res) => {
+const getRooms = async (req, res) => {
   try {
     const rooms = await Room.find(); // Fetch all rooms
     res.status(200).json({ success: true, rooms });
@@ -249,11 +249,8 @@ export const getRooms = async (req, res) => {
   }
 };
 
-
-// Add these functions at the end of your roomController file
-
 // Update a showtime
-export const updateShowtime = async (req, res) => {
+const updateShowtime = async (req, res) => {
   try {
     const { showtimeId } = req.params;
     const { room_id, date, start_time, end_time } = req.body;
@@ -424,7 +421,7 @@ export const updateShowtime = async (req, res) => {
 };
 
 // Delete a showtime
-export const deleteShowtime = async (req, res) => {
+const deleteShowtime = async (req, res) => {
   try {
     const { showtimeId } = req.params;
     const { room_id } = req.body;
@@ -454,9 +451,8 @@ export const deleteShowtime = async (req, res) => {
   }
 };
 
-
 // Get a room by ID
-export const getRoomById = async (req, res) => {
+const getRoomById = async (req, res) => {
   try {
     const { room_id } = req.body; // Get room_id from request body instead of URL params
     
@@ -493,4 +489,13 @@ export const getRoomById = async (req, res) => {
       error: error.message 
     });
   }
+};
+
+module.exports = {
+  allocateMovieToRoom,
+  getRoomShowtimes,
+  getRooms,
+  updateShowtime,
+  deleteShowtime,
+  getRoomById
 };
